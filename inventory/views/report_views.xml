@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Stock Valuation -->
+        <record id="view_havanoposdesk_stock_valuation_tree" model="ir.ui.view">
+            <field name="name">havanoposdesk.stock.valuation.tree</field>
+            <field name="model">havanoposdesk.stock.valuation</field>
+            <field name="arch" type="xml">
+                <list string="Stock Valuation" create="0">
+                    <field name="item_name"/>
+                    <field name="item_code"/>
+                    <field name="category_id"/>
+                    <field name="store"/>
+                    <field name="on_hand_qty"/>
+                    <field name="value_cost"/>
+                    <field name="value_selling"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Stock Ledger -->
+        <record id="view_havanoposdesk_stock_ledger_tree" model="ir.ui.view">
+            <field name="name">havanoposdesk.stock.ledger.tree</field>
+            <field name="model">havanoposdesk.stock.ledger</field>
+            <field name="arch" type="xml">
+                <list string="Stock Ledger" create="0">
+                    <field name="item_name"/>
+                    <field name="item_code"/>
+                    <field name="uom_id"/>
+                    <field name="in_qty"/>
+                    <field name="out_qty"/>
+                    <field name="balance_qty"/>
+                    <field name="store"/>
+                    <field name="category_id"/>
+                    <field name="in_value"/>
+                    <field name="out_value"/>
+                    <field name="cost_price"/>
+                    <field name="type"/>
+                    <field name="doc_no"/>
+                    <field name="balance_value"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Actions -->
+        <record id="action_havanoposdesk_stock_valuation" model="ir.actions.act_window">
+            <field name="name">Stock Valuation</field>
+            <field name="res_model">havanoposdesk.stock.valuation</field>
+            <field name="view_mode">list</field>
+        </record>
+
+        <record id="action_havanoposdesk_stock_ledger" model="ir.actions.act_window">
+            <field name="name">Stock Ledger</field>
+            <field name="res_model">havanoposdesk.stock.ledger</field>
+            <field name="view_mode">list</field>
+        </record>
+
+        <!-- Menus -->
+        <menuitem id="menu_inventory_stock_valuation" name="Stock Valuation" parent="menu_inventory_reports" action="action_havanoposdesk_stock_valuation" sequence="10"/>
+        <menuitem id="menu_inventory_stock_ledger" name="Stock Ledger" parent="menu_inventory_reports" action="action_havanoposdesk_stock_ledger" sequence="20"/>
+    </data>
+</odoo>
