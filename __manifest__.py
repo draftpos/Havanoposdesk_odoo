@@ -1,5 +1,5 @@
 {
-    'name': 'Havano ERP',
+    'name': 'Havano ERP (havanoposdesk_odoo)',
     'version': '1.0',
     'category': 'Sales/Point of Sale',
     'summary': 'Unified ERP backend serving Flutter POS app and Odoo UI',

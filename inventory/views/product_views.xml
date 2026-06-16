@@ -38,8 +38,8 @@
                                     <group string="Product information">
                                         <field name="name"/>
                                         <field name="item_code" invisible="1"/>
-                                        <field name="category_id"/>
-                                        <field name="uom_id"/>
+                                        <field name="category_id" options="{'no_create': True, 'no_create_edit': True}"/>
+                                        <field name="uom_id" options="{'no_create': True, 'no_create_edit': True}"/>
                                         <field name="tenant_id" invisible="1"/>
                                         <field name="track_qty"/>
                                         <field name="color" invisible="1"/>
