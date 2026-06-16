@@ -7,10 +7,7 @@
             <field name="arch" type="xml">
                 <list string="Categories">
                     <field name="name"/>
-                    <field name="classification_code" optional="show"/>
                     <field name="is_main_category" optional="show"/>
-                    <field name="parent_id" optional="hide"/>
-                    <field name="color_hex" widget="color" optional="hide"/>
                     <field name="tenant_id" column_invisible="1"/>
                 </list>
             </field>
@@ -22,7 +19,6 @@
             <field name="arch" type="xml">
                 <form string="Category">
                     <sheet>
-                        <field name="image_1920" widget="image" class="oe_avatar" options="{'preview_image': 'image_1920'}"/>
                         <div class="oe_title">
                             <label for="name" class="oe_edit_only" string="Category Name"/>
                             <h1>
@@ -32,12 +28,9 @@
                         <group>
                             <group>
                                 <field name="is_main_category"/>
-                                <field name="parent_id" invisible="is_main_category == True"/>
-                                <field name="classification_code"/>
+                                <field name="tenant_id" invisible="1"/>
                             </group>
                             <group>
-                                <field name="color_hex" widget="color" placeholder="e.g. ffffff"/>
-                                <field name="tenant_id" invisible="1"/>
                             </group>
                         </group>
                     </sheet>

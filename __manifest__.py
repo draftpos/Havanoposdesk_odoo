@@ -12,6 +12,7 @@
     'depends': ['base', 'web'],
     'data': [
         'security/ir.model.access.csv',
+        'inventory/data/sequence.xml',
         'core/views/menus.xml',
         'core/views/tenant_views.xml',
         'inventory/views/category_views.xml',
@@ -21,4 +22,5 @@
     'installable': True,
     'application': True,
     'license': 'LGPL-3',
+
 }

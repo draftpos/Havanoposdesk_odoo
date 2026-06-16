@@ -15,7 +15,7 @@
                     <field name="selling_price" optional="show"/>
                     <field name="track_qty" optional="show"/>
                     <field name="opening_stock" string="Stock on Hand" optional="show"/>
-                    <field name="color_hex" widget="color" optional="hide"/>
+                    <field name="color" column_invisible="1"/>
                     <field name="tenant_id" column_invisible="1"/>
                 </list>
             </field>
@@ -28,57 +28,50 @@
             <field name="arch" type="xml">
                 <form string="Product">
                     <sheet>
-                        <field name="image_1920" widget="image" class="oe_avatar" options="{'preview_image': 'image_1920'}"/>
-                        
-                        <div class="w-100 d-flex justify-content-center mb-3">
-                            <notebook>
-                                <page string="DETAILS">
-                                    <group>
-                                        <group string="Product information">
-                                            <field name="item_code"/>
-                                            <field name="category_id"/>
-                                            <field name="uom_id"/>
-                                            <field name="tenant_id" invisible="1"/>
-                                        </group>
-                                        <group string="Price information">
-                                            <field name="buying_price"/>
-                                            <field name="selling_price"/>
-                                            <field name="markup"/>
-                                            <field name="id" invisible="1"/>
-                                            <field name="opening_stock" string="Opening Stock" invisible="id"/>
-                                            <field name="opening_stock" string="Stock on Hand" invisible="not id" readonly="1"/>
-                                        </group>
-                                        <group string="Stock &amp; Appearance">
-                                            <field name="track_qty"/>
-                                            <field name="color_hex" widget="color" placeholder="e.g. ffffff"/>
-                                        </group>
+                        <notebook>
+                            <style>
+                                /* Disable Odoo's forced ALL-CAPS on notebook tabs */
+                                .o_notebook .nav-tabs .nav-link { text-transform: none !important; font-size: 14px; }
+                            </style>
+                            <page string="Details">
+                                <group>
+                                    <group string="Product information">
+                                        <field name="name"/>
+                                        <field name="item_code" invisible="1"/>
+                                        <field name="category_id"/>
+                                        <field name="uom_id"/>
+                                        <field name="tenant_id" invisible="1"/>
+                                        <field name="track_qty"/>
+                                        <field name="color" invisible="1"/>
                                     </group>
-                                </page>
-                                <page string="ADVANCED PRICING">
-                                    <group>
-                                        <group>
-                                            <field name="discount_percentage"/>
-                                            <field name="tax_percentage"/>
-                                        </group>
+                                    <group string="Price information">
+                                        <field name="buying_price"/>
+                                        <field name="selling_price"/>
+                                        <field name="markup"/>
+                                        <field name="id" invisible="1"/>
+                                        <field name="opening_stock" string="Opening Stock" invisible="id"/>
+                                        <field name="opening_stock" string="Stock on Hand" invisible="not id" readonly="1"/>
+                                        <field name="image_1920" widget="image" class="oe_avatar" options="{'preview_image': 'image_1920'}"/>
                                     </group>
-                                </page>
-                                <page string="OTHER">
+                                </group>
+                            </page>
+                            <page string="Advanced Pricing">
+                                <group>
                                     <group>
-                                        <group>
-                                            <field name="is_active"/>
-                                            <field name="internal_notes"/>
-                                        </group>
+                                        <field name="discount_percentage"/>
+                                        <field name="tax_percentage"/>
                                     </group>
-                                </page>
-                            </notebook>
-                        </div>
-
-                        <div class="oe_title text-center w-100 mt-3">
-                            <label for="name" class="oe_edit_only" string="Product Name"/>
-                            <h1>
-                                <field name="name" placeholder="e.g. Delta Can 550ml"/>
-                            </h1>
-                        </div>
+                                </group>
+                            </page>
+                            <page string="Other">
+                                <group>
+                                    <group>
+                                        <field name="is_active"/>
+                                        <field name="internal_notes"/>
+                                    </group>
+                                </group>
+                            </page>
+                        </notebook>
                     </sheet>
                 </form>
             </field>
