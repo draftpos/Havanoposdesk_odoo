@@ -5,3 +5,5 @@ access_havanoposdesk_uom,havanoposdesk.uom,model_havanoposdesk_uom,base.group_us
 access_havanoposdesk_product,havanoposdesk.product,model_havanoposdesk_product,base.group_user,1,1,1,1
 access_havanoposdesk_stock_valuation,havanoposdesk.stock.valuation,model_havanoposdesk_stock_valuation,base.group_user,1,0,0,0
 access_havanoposdesk_stock_ledger,havanoposdesk.stock.ledger,model_havanoposdesk_stock_ledger,base.group_user,1,0,0,0
+access_havanoposdesk_stock_adjustment,havanoposdesk.stock.adjustment,model_havanoposdesk_stock_adjustment,base.group_user,1,1,1,1
+access_havanoposdesk_stock_adjustment_line,havanoposdesk.stock.adjustment.line,model_havanoposdesk_stock_adjustment_line,base.group_user,1,1,1,1
