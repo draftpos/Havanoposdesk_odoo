@@ -50,6 +50,18 @@
         <menuitem id="menu_tenant" name="Tenants" parent="base.menu_users" action="action_havanoposdesk_tenant" sequence="100"/>
         <menuitem id="menu_shop" name="Shops" parent="base.menu_users" action="action_havanoposdesk_shop" sequence="110"/>
 
+        <!-- Action: Purchases Analytics fallback -->
+        <record id="action_purchases_analysis" model="ir.actions.act_window">
+            <field name="name">Purchases Analysis</field>
+            <field name="res_model">havanoposdesk.purchase</field>
+            <field name="view_mode">list,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Purchases Analysis
+                </p>
+            </field>
+        </record>
+
         <!-- My Business Analytics Navigation (visible to tenant admins / base.group_user) -->
         <menuitem id="menu_my_business_analytics" name="Analytics" parent="menu_my_business_root" sequence="40"/>
         <menuitem id="menu_my_sales_analysis" name="Sales Analysis" parent="menu_my_business_analytics" action="action_sales_analysis" sequence="10"/>
