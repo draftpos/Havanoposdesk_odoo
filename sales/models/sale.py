@@ -1,8 +1,10 @@
 from odoo import models, fields, api
+from datetime import datetime, time
 
 class Sale(models.Model):
     _name = 'havanoposdesk.sale'
     _description = 'Sale'
+    _order = 'date desc, id desc'
 
     def _default_posting_time(self):
         now_utc = fields.Datetime.now()
@@ -17,12 +19,61 @@ class Sale(models.Model):
     
     line_ids = fields.One2many('havanoposdesk.sale.line', 'sale_id', string='Items')
 
+    # View-required fields to avoid undefined errors
+    tenant_id = fields.Many2one(
+        'havanoposdesk.tenant', 
+        string='Tenant', 
+        required=True, 
+        default=lambda self: self.env.user.tenant_id.id or (self.env['havanoposdesk.tenant'].search([], limit=1) or self.env['havanoposdesk.tenant'].create({'name': 'Default Tenant'})).id
+    )
+    shop_id = fields.Many2one(
+        'havanoposdesk.shop', 
+        string='Shop', 
+        required=True, 
+        default=lambda self: self.env.user.default_shop_id.id or self.env['havanoposdesk.shop'].search([('tenant_id', '=', self.env.user.tenant_id.id)], limit=1).id
+    )
+    date = fields.Datetime(string='Sale Date', default=fields.Datetime.now, required=True)
+    amount_total = fields.Float(string='Total Amount', compute='_compute_amount_total', store=True)
+    salesperson_id = fields.Many2one('res.users', string='Salesperson', default=lambda self: self.env.user.id)
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('confirmed', 'Confirmed'),
+        ('done', 'Done')
+    ], string='Status', default='done', required=True)
+
+    @api.depends('line_ids.amount')
+    def _compute_amount_total(self):
+        for record in self:
+            record.amount_total = sum(record.line_ids.mapped('amount'))
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('name', 'New') == 'New':
                 vals['name'] = self.env['ir.sequence'].next_by_code('havanoposdesk.sale') or 'New'
-        
+            
+            # Sync store and shop_id
+            if 'store' in vals and not vals.get('shop_id'):
+                shop = self.env['havanoposdesk.shop'].search([('name', '=', vals['store'])], limit=1)
+                if shop:
+                    vals['shop_id'] = shop.id
+            elif 'shop_id' in vals and not vals.get('store'):
+                shop = self.env['havanoposdesk.shop'].browse(vals['shop_id'])
+                if shop:
+                    vals['store'] = shop.name
+                    
+            # Sync date and posting_date / posting_time
+            if 'date' in vals and not vals.get('posting_date'):
+                dt = fields.Datetime.to_datetime(vals['date'])
+                vals['posting_date'] = dt.date()
+                vals['posting_time'] = dt.hour + dt.minute / 60.0
+            elif 'posting_date' in vals and not vals.get('date'):
+                p_date = fields.Date.to_date(vals['posting_date'])
+                p_time = vals.get('posting_time', 0.0)
+                hours = int(p_time)
+                minutes = int((p_time - hours) * 60)
+                vals['date'] = datetime.combine(p_date, time(hours, minutes))
+
         sales = super().create(vals_list)
         
         for sale in sales:
@@ -59,6 +110,30 @@ class Sale(models.Model):
                             'on_hand_qty': -line.accepted_qty,
                         })
         return sales
+
+    def write(self, vals):
+        # Sync values on write
+        if 'store' in vals and 'shop_id' not in vals:
+            shop = self.env['havanoposdesk.shop'].search([('name', '=', vals['store'])], limit=1)
+            if shop:
+                vals['shop_id'] = shop.id
+        elif 'shop_id' in vals and 'store' not in vals:
+            shop = self.env['havanoposdesk.shop'].browse(vals['shop_id'])
+            if shop:
+                vals['store'] = shop.name
+
+        if 'date' in vals and 'posting_date' not in vals:
+            dt = fields.Datetime.to_datetime(vals['date'])
+            vals['posting_date'] = dt.date()
+            vals['posting_time'] = dt.hour + dt.minute / 60.0
+        elif 'posting_date' in vals and 'date' not in vals:
+            p_date = fields.Date.to_date(vals['posting_date'])
+            p_time = vals.get('posting_time') or (self.posting_time if hasattr(self, 'posting_time') else 0.0)
+            hours = int(p_time)
+            minutes = int((p_time - hours) * 60)
+            vals['date'] = datetime.combine(p_date, time(hours, minutes))
+
+        return super().write(vals)
 
 class SaleLine(models.Model):
     _name = 'havanoposdesk.sale.line'

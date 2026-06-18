@@ -7,6 +7,7 @@ class HavanoposdeskSupplier(models.Model):
     name = fields.Char(string='Supplier Name', required=True)
     phone = fields.Char(string='Phone')
     email = fields.Char(string='Email')
+    address = fields.Text(string='Address')
     tenant_id = fields.Many2one(
         'havanoposdesk.tenant', 
         string='Tenant', 
