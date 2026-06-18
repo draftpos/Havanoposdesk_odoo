@@ -7,6 +7,7 @@
             <field name="model">havanoposdesk.product</field>
             <field name="arch" type="xml">
 <<<<<<< HEAD
+<<<<<<< HEAD
                 <list string="Products">
                     <field name="name"/>
                     <field name="item_code" optional="show"/>
@@ -20,6 +21,8 @@
                     <field name="tenant_id" column_invisible="1"/>
                     <field name="shop_id" optional="show"/>
 =======
+=======
+>>>>>>> 4b8e381 (feat:updated)
                 <list  string="Products">
                     <field  name="name"/>
                     <field  name="item_code" optional="show"/>
@@ -31,7 +34,24 @@
                     <field  name="opening_stock" string="On hand" optional="show"/>
                     <field  name="color" column_invisible="1"/>
                     <field  name="tenant_id" column_invisible="1"/>
+<<<<<<< HEAD
 >>>>>>> 55fb830 (Add Purchases, Sales, Customers, and Suppliers modules and layout fixes)
+=======
+=======
+                <list string="Products">
+                    <field name="name"/>
+                    <field name="item_code" optional="show"/>
+                    <field name="category_id" optional="show"/>
+                    <field name="uom_id" optional="show"/>
+                    <field name="buying_price" optional="show"/>
+                    <field name="selling_price" optional="show"/>
+                    <field name="track_qty" optional="show"/>
+                    <field name="opening_stock" string="Stock on Hand" optional="show"/>
+                    <field name="color" column_invisible="1"/>
+                    <field name="tenant_id" column_invisible="1"/>
+                    <field name="shop_id" optional="show"/>
+>>>>>>> fc87fa5 (feat:updated code)
+>>>>>>> 4b8e381 (feat:updated)
                 </list>
             </field>
         </record>
@@ -57,11 +77,19 @@
                                         <field name="uom_id" options="{'no_create': True, 'no_create_edit': True}" class="border-bottom border-dark"/>
                                         <field name="tenant_id" invisible="1"/>
 <<<<<<< HEAD
+<<<<<<< HEAD
                                         <field name="shop_id" options="{'no_create': True}"/>
                                         <field name="track_qty"/>
 =======
                                         <field name="track_qty" class="border-bottom border-dark"/>
 >>>>>>> a0b0957 (Add Stock Adjustment feature, update views with bottom borders)
+=======
+                                        <field name="track_qty" class="border-bottom border-dark"/>
+=======
+                                        <field name="shop_id" options="{'no_create': True}"/>
+                                        <field name="track_qty"/>
+>>>>>>> fc87fa5 (feat:updated code)
+>>>>>>> 4b8e381 (feat:updated)
                                         <field name="color" invisible="1"/>
                                     </group>
                                     <group string="Price information">
