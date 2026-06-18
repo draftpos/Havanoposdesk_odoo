@@ -1,2 +1,2 @@
-from . import purchase
 from . import supplier
+from . import purchase

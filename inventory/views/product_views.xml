@@ -6,17 +6,18 @@
             <field name="name">havanoposdesk.product.tree</field>
             <field name="model">havanoposdesk.product</field>
             <field name="arch" type="xml">
-                <list  string="Products">
-                    <field  name="name"/>
-                    <field  name="item_code" optional="show"/>
-                    <field  name="category_id" optional="show"/>
-                    <field  name="uom_id" optional="show"/>
-                    <field  name="buying_price" optional="show"/>
-                    <field  name="selling_price" optional="show"/>
-                    <field  name="track_qty" optional="show"/>
-                    <field  name="opening_stock" string="On hand" optional="show"/>
-                    <field  name="color" column_invisible="1"/>
-                    <field  name="tenant_id" column_invisible="1"/>
+                <list string="Products">
+                    <field name="name"/>
+                    <field name="item_code" optional="show"/>
+                    <field name="category_id" optional="show"/>
+                    <field name="uom_id" optional="show"/>
+                    <field name="buying_price" optional="show"/>
+                    <field name="selling_price" optional="show"/>
+                    <field name="track_qty" optional="show"/>
+                    <field name="opening_stock" string="Stock on Hand" optional="show"/>
+                    <field name="color" column_invisible="1"/>
+                    <field name="tenant_id" column_invisible="1"/>
+                    <field name="shop_id" optional="show"/>
                 </list>
             </field>
         </record>
@@ -41,7 +42,8 @@
                                         <field name="category_id" options="{'no_create': True, 'no_create_edit': True}" class="border-bottom border-dark"/>
                                         <field name="uom_id" options="{'no_create': True, 'no_create_edit': True}" class="border-bottom border-dark"/>
                                         <field name="tenant_id" invisible="1"/>
-                                        <field name="track_qty" class="border-bottom border-dark"/>
+                                        <field name="shop_id" options="{'no_create': True}"/>
+                                        <field name="track_qty"/>
                                         <field name="color" invisible="1"/>
                                     </group>
                                     <group string="Price information">
