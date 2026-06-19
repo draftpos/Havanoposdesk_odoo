@@ -23,14 +23,32 @@
                 
                 <!-- My Business Settings -->
                 <app logo="/Havanoposdesk_odoo/static/description/icon.png" data-string="My Business" string="My Business" name="havanoposdesk_my_business" groups="base.group_user">
-                    <block title="Currency Configuration" name="currency_config">
-                        <setting id="business_currency" string="Currency" help="Main currency of your company">
-                            <field name="havano_currency_id"/>
-                        </setting>
-                        <setting id="allow_multi_currency" string="Multi-Currencies" help="Record transactions in foreign currencies">
-                            <field name="havano_allow_multi_currency"/>
-                        </setting>
-                    </block>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="biz_allow_multi_currency"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="biz_allow_multi_currency" string="Multi-Currencies"/>
+                                <div class="text-muted">
+                                    Allow multiple currencies for your business
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <label for="biz_currency_id"/>
+                                <div class="text-muted">
+                                    Main currency of your business
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <field name="biz_currency_id" class="o_light_label"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </app>
                 
                 <!-- Sales Settings -->

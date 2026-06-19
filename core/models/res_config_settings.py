@@ -10,14 +10,31 @@ class ResConfigSettings(models.TransientModel):
         help="If enabled, you can sell items even if their stock quantity goes below zero. Purchasing items will compensate for the negative balance."
     )
 
-    havano_currency_id = fields.Many2one(
+    biz_currency_id = fields.Many2one(
         'res.currency', 
         string="Business Currency",
-        related='env.user.tenant_id.currency_id',
         readonly=False
     )
-    havano_allow_multi_currency = fields.Boolean(
+    biz_allow_multi_currency = fields.Boolean(
         string="Allow Multi Currency",
-        related='env.user.tenant_id.allow_multi_currency',
         readonly=False
     )
+
+    def get_values(self):
+        res = super(ResConfigSettings, self).get_values()
+        tenant = self.env.user.tenant_id
+        if tenant:
+            res.update(
+                biz_currency_id=tenant.currency_id.id,
+                biz_allow_multi_currency=tenant.allow_multi_currency,
+            )
+        return res
+
+    def set_values(self):
+        super(ResConfigSettings, self).set_values()
+        tenant = self.env.user.tenant_id
+        if tenant:
+            tenant.sudo().write({
+                'currency_id': self.biz_currency_id.id,
+                'allow_multi_currency': self.biz_allow_multi_currency,
+            })
