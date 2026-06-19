@@ -23,6 +23,7 @@
                 
                 <!-- My Business Settings -->
                 <app logo="/Havanoposdesk_odoo/static/description/icon.png" data-string="My Business" string="My Business" name="havanoposdesk_my_business" groups="base.group_user">
+                    <field name="tenant_id" invisible="1"/>
                     <div class="row mt16 o_settings_container">
                         <div class="col-12 col-lg-6 o_setting_box">
                             <div class="o_setting_left_pane">
