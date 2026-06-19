@@ -19,6 +19,11 @@ class ResUsers(models.Model):
     default_store_id = fields.Many2one('havanoposdesk.store', string="Default Store")
     store_ids = fields.Many2many('havanoposdesk.store', 'res_users_store_rel', 'user_id', 'store_id', string="Allowed Stores")
 
+    api_company_name = fields.Char(string="API Company Name", default="Havano POS Company")
+    api_currency = fields.Char(string="API Currency", default="USD")
+    api_cost_center = fields.Char(string="API Cost Center")
+    api_warehouse = fields.Char(string="API Warehouse")
+
     @api.model
     def check_access_rights(self, operation, raise_exception=True):
         if self.env.user.havano_role == 'admin' and operation in ('read', 'write', 'create', 'search'):

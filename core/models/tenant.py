@@ -25,6 +25,11 @@ class HavanoposdeskTenant(models.Model):
     
     user_ids = fields.One2many('res.users', 'tenant_id', string='Users')
 
+    api_company_name = fields.Char(string="API Company Name", default="Havano POS Company")
+    api_currency = fields.Char(string="API Currency", default="USD")
+    api_cost_center = fields.Char(string="API Cost Center")
+    api_warehouse = fields.Char(string="API Warehouse")
+
     def action_approve(self):
         for tenant in self:
             tenant.with_context(bypass_subscription_check=True).write({
