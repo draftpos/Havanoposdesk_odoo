@@ -13,7 +13,7 @@
 
             <xpath expr="//form" position="inside">
                 <!-- SaaS Config Settings -->
-                <app data-string="SaaS Config" string="SaaS Config" name="havanoposdesk_saas" groups="base.group_system">
+                <app logo="/Havanoposdesk_odoo/static/description/icon.png" data-string="SaaS Config" string="SaaS Config" name="havanoposdesk_saas" groups="base.group_system">
                     <block title="SaaS Administration" name="saas_config">
                         <div>
                             <p class="text-muted">Global SaaS settings, users, and tenants configuration.</p>
@@ -22,7 +22,7 @@
                 </app>
                 
                 <!-- My Business Settings -->
-                <app data-string="My Business" string="My Business" name="havanoposdesk_my_business" groups="base.group_user">
+                <app logo="/Havanoposdesk_odoo/static/description/icon.png" data-string="My Business" string="My Business" name="havanoposdesk_my_business" groups="base.group_user">
                     <block title="Business Configuration" name="business_config">
                         <div>
                             <p class="text-muted">General settings for your business will go here.</p>
@@ -31,7 +31,7 @@
                 </app>
                 
                 <!-- Sales Settings -->
-                <app data-string="Sales" string="Sales" name="havanoposdesk_sales" groups="base.group_user">
+                <app logo="/sale/static/description/icon.png" data-string="Sales" string="Sales" name="havanoposdesk_sales" groups="base.group_user">
                     <block title="Sales Configuration" name="sales_config">
                         <div>
                             <p class="text-muted">Point of Sale and Sales settings will go here.</p>
@@ -40,7 +40,7 @@
                 </app>
                 
                 <!-- Stock Settings -->
-                <app data-string="Stock" string="Stock" name="havanoposdesk_stock" groups="base.group_user">
+                <app logo="/stock/static/description/icon.png" data-string="Stock" string="Stock" name="havanoposdesk_stock" groups="base.group_user">
                     <block title="Inventory Operations" name="stock_config">
                         <setting id="allow_negative_stock_setting" help="Allow selling products even when their quantity on hand is zero or less. Purchasing more will compensate the negative balance automatically.">
                             <field name="havano_allow_negative_stock" widget="boolean_toggle"/>
@@ -49,7 +49,7 @@
                 </app>
 
                 <!-- Accounts Settings -->
-                <app data-string="Accounts" string="Accounts" name="havanoposdesk_accounts" groups="base.group_user">
+                <app logo="/account/static/description/icon.png" data-string="Accounts" string="Accounts" name="havanoposdesk_accounts" groups="base.group_user">
                     <block title="Accounting Configuration" name="accounts_config">
                         <div>
                             <p class="text-muted">Chart of accounts, taxes, and accounting settings will go here.</p>
@@ -58,7 +58,7 @@
                 </app>
                 
                 <!-- Suppliers Settings -->
-                <app data-string="Suppliers" string="Suppliers" name="havanoposdesk_suppliers" groups="base.group_user">
+                <app logo="/purchase/static/description/icon.png" data-string="Suppliers" string="Suppliers" name="havanoposdesk_suppliers" groups="base.group_user">
                     <block title="Purchasing Configuration" name="suppliers_config">
                         <div>
                             <p class="text-muted">Supplier and purchasing settings will go here.</p>
