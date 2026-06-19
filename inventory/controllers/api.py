@@ -453,6 +453,7 @@ class HavanoPOSDeskAPI(http.Controller):
             'subscription_payment_id': payment.id,
         })
 
+        # pyrefly: ignore [missing-import]
         from odoo.addons.havano_payments.models.paynow_client import PaynowClient
         base_url = provider.get_base_url()
         result_url = f"{base_url}/payment/havano_payments/webhook?reference={reference}"
