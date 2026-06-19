@@ -14,6 +14,7 @@ class ItemProfitabilityReport(models.Model):
     profit = fields.Float(string='Profit', readonly=True)
     profit_margin = fields.Float(string='Profit Margin (%)', readonly=True)
     tenant_id = fields.Many2one('havanoposdesk.tenant', string='Tenant', readonly=True)
+    store_id = fields.Many2one('havanoposdesk.store', string='Store', readonly=True)
 
     def init(self):
         tools.drop_view_if_exists(self.env.cr, self._table)
@@ -31,12 +32,15 @@ class ItemProfitabilityReport(models.Model):
                     CASE WHEN SUM(l.amount) > 0 THEN 
                         ((SUM(l.amount) - (SUM(l.accepted_qty) * p.buying_price)) / SUM(l.amount)) * 100 
                     ELSE 0 END as profit_margin,
-                    l.tenant_id
+                    l.tenant_id,
+                    s.store_id
                 FROM
                     havanoposdesk_sale_line l
                 JOIN
                     havanoposdesk_product p ON p.id = l.product_id
+                JOIN
+                    havanoposdesk_sale s ON s.id = l.sale_id
                 GROUP BY
-                    l.product_id, p.item_code, p.name, p.buying_price, l.tenant_id
+                    l.product_id, p.item_code, p.name, p.buying_price, l.tenant_id, s.store_id
             )
         """ % (self._table,))

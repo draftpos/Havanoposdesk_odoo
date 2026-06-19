@@ -9,6 +9,7 @@
                 <list string="Item Profitability" create="false" edit="false" delete="false">
                     <field name="item_code"/>
                     <field name="name"/>
+                    <field name="store_id"/>
                     <field name="qty" sum="Total Qty"/>
                     <field name="cost_price" widget="monetary"/>
                     <field name="selling_price" widget="monetary"/>
