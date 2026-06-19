@@ -7,6 +7,11 @@ class HavanoposdeskStore(models.Model):
 
     name = fields.Char(string='Store Name', required=True)
     tenant_id = fields.Many2one('havanoposdesk.tenant', string='Tenant', required=True)
+    currency_id = fields.Many2one(
+        'res.currency', 
+        string='Store Currency', 
+        default=lambda self: self.env.user.tenant_id.currency_id.id if self.env.user.tenant_id else self.env.ref('base.USD').id
+    )
     active = fields.Boolean(string='Active', default=True)
     is_default = fields.Boolean(string='Is Default', default=False)
 

@@ -23,10 +23,13 @@
                 
                 <!-- My Business Settings -->
                 <app logo="/Havanoposdesk_odoo/static/description/icon.png" data-string="My Business" string="My Business" name="havanoposdesk_my_business" groups="base.group_user">
-                    <block title="Business Configuration" name="business_config">
-                        <div>
-                            <p class="text-muted">General settings for your business will go here.</p>
-                        </div>
+                    <block title="Currency Configuration" name="currency_config">
+                        <setting id="business_currency" string="Currency" help="Main currency of your company">
+                            <field name="havano_currency_id"/>
+                        </setting>
+                        <setting id="allow_multi_currency" string="Multi-Currencies" help="Record transactions in foreign currencies">
+                            <field name="havano_allow_multi_currency"/>
+                        </setting>
                     </block>
                 </app>
                 
