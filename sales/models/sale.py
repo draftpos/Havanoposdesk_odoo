@@ -143,6 +143,12 @@ class SaleLine(models.Model):
     _name = 'havanoposdesk.sale.line'
     _description = 'Sale Line'
 
+    tenant_id = fields.Many2one(
+        'havanoposdesk.tenant', 
+        string='Tenant', 
+        required=True, 
+        default=lambda self: self.env.user.tenant_id.id or (self.env['havanoposdesk.tenant'].search([], limit=1) or self.env['havanoposdesk.tenant'].create({'name': 'Default Tenant'})).id
+    )
     sale_id = fields.Many2one('havanoposdesk.sale', string='Sale', required=True, ondelete='cascade')
     product_id = fields.Many2one('havanoposdesk.product', string='Item', required=True)
     item_code = fields.Char(related='product_id.item_code', string='Item Code', readonly=True)

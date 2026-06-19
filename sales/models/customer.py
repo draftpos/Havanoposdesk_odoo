@@ -5,12 +5,24 @@ class CustomerGroup(models.Model):
     _description = 'Customer Group'
 
     name = fields.Char(string='Group Name', required=True)
+    tenant_id = fields.Many2one(
+        'havanoposdesk.tenant', 
+        string='Tenant', 
+        required=True, 
+        default=lambda self: self.env.user.tenant_id.id or (self.env['havanoposdesk.tenant'].search([], limit=1) or self.env['havanoposdesk.tenant'].create({'name': 'Default Tenant'})).id
+    )
 
 class Customer(models.Model):
     _name = 'havanoposdesk.customer'
     _description = 'Customer'
 
     name = fields.Char(string='Customer Name', required=True)
+    tenant_id = fields.Many2one(
+        'havanoposdesk.tenant', 
+        string='Tenant', 
+        required=True, 
+        default=lambda self: self.env.user.tenant_id.id or (self.env['havanoposdesk.tenant'].search([], limit=1) or self.env['havanoposdesk.tenant'].create({'name': 'Default Tenant'})).id
+    )
     phone = fields.Char(string='Phone')
     address = fields.Char(string='Address')
     city = fields.Char(string='City')

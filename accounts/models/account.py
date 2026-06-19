@@ -12,4 +12,10 @@ class Account(models.Model):
     ], string='Account Type', required=True, default='Expense')
     
     # Store reference for multi-tenancy if applicable
+    tenant_id = fields.Many2one(
+        'havanoposdesk.tenant', 
+        string='Tenant', 
+        required=True, 
+        default=lambda self: self.env.user.tenant_id.id or (self.env['havanoposdesk.tenant'].search([], limit=1) or self.env['havanoposdesk.tenant'].create({'name': 'Default Tenant'})).id
+    )
     store_id = fields.Many2one('havanoposdesk.store', string='Store')

@@ -13,6 +13,12 @@ class Purchase(models.Model):
         return self.env['havanoposdesk.store'].search([('is_default', '=', True)], limit=1).id
 
     name = fields.Char(string='Reference', required=True, copy=False, readonly=True, default=lambda self: 'New')
+    tenant_id = fields.Many2one(
+        'havanoposdesk.tenant', 
+        string='Tenant', 
+        required=True, 
+        default=lambda self: self.env.user.tenant_id.id or (self.env['havanoposdesk.tenant'].search([], limit=1) or self.env['havanoposdesk.tenant'].create({'name': 'Default Tenant'})).id
+    )
     supplier = fields.Many2one('havanoposdesk.supplier', string='Supplier', required=True)
     store_id = fields.Many2one('havanoposdesk.store', string='Store', default=_default_store_id)
     posting_date = fields.Date(string='Posting Date', default=fields.Date.context_today)
@@ -67,6 +73,12 @@ class PurchaseLine(models.Model):
     _name = 'havanoposdesk.purchase.line'
     _description = 'Purchase Line'
 
+    tenant_id = fields.Many2one(
+        'havanoposdesk.tenant', 
+        string='Tenant', 
+        required=True, 
+        default=lambda self: self.env.user.tenant_id.id or (self.env['havanoposdesk.tenant'].search([], limit=1) or self.env['havanoposdesk.tenant'].create({'name': 'Default Tenant'})).id
+    )
     purchase_id = fields.Many2one('havanoposdesk.purchase', string='Purchase', required=True, ondelete='cascade')
     product_id = fields.Many2one('havanoposdesk.product', string='Item', required=True)
     item_code = fields.Char(related='product_id.item_code', string='Item Code', readonly=True)
