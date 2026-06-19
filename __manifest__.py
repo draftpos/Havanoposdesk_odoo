@@ -39,6 +39,7 @@
         'sales/data/sequence.xml',
         'sales/views/sale_views.xml',
         'sales/views/customer_views.xml',
+        'sales/views/item_profitability_report_views.xml',
     ],
     'installable': True,
     'application': True,
