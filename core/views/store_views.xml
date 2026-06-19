@@ -31,6 +31,7 @@
                             <group>
                                 <field name="name"/>
                                 <field name="tenant_id" options="{'no_create': True}"/>
+                                <field name="currency_id" options="{'no_create': True, 'no_open': True}"/>
                             </group>
                             <group>
                                 <field name="active"/>

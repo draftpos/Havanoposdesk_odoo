@@ -143,6 +143,12 @@ class SaleLine(models.Model):
     _name = 'havanoposdesk.sale.line'
     _description = 'Sale Line'
 
+    tenant_id = fields.Many2one(
+        'havanoposdesk.tenant', 
+        string='Tenant', 
+        required=True, 
+        default=lambda self: self.env.user.tenant_id.id or (self.env['havanoposdesk.tenant'].search([], limit=1) or self.env['havanoposdesk.tenant'].create({'name': 'Default Tenant'})).id
+    )
     sale_id = fields.Many2one('havanoposdesk.sale', string='Sale', required=True, ondelete='cascade')
     product_id = fields.Many2one('havanoposdesk.product', string='Item', required=True)
     item_code = fields.Char(related='product_id.item_code', string='Item Code', readonly=True)
@@ -162,7 +168,8 @@ class SaleLine(models.Model):
 
     @api.onchange('accepted_qty', 'product_id')
     def _onchange_qty(self):
-        if self.product_id and self.accepted_qty > self.product_id.opening_stock:
+        allow_negative = self.env['ir.config_parameter'].sudo().get_param('havanoposdesk.allow_negative_stock', 'True') == 'True'
+        if not allow_negative and self.product_id and self.accepted_qty > self.product_id.opening_stock:
             return {
                 'warning': {
                     'title': 'Insufficient Stock',
@@ -172,8 +179,9 @@ class SaleLine(models.Model):
 
     @api.constrains('accepted_qty')
     def _check_stock(self):
+        allow_negative = self.env['ir.config_parameter'].sudo().get_param('havanoposdesk.allow_negative_stock', 'True') == 'True'
         for line in self:
             if line.accepted_qty < 0:
                 raise ValidationError("Quantity cannot be negative.")
-            if line.product_id and line.accepted_qty > line.product_id.opening_stock:
+            if not allow_negative and line.product_id and line.accepted_qty > line.product_id.opening_stock:
                 raise ValidationError(f"You cannot sell {line.accepted_qty} of {line.product_id.name} because you only have {line.product_id.opening_stock} on hand.")
