@@ -42,7 +42,7 @@
     'license': 'LGPL-3',
     'assets': {
         'web.assets_backend': [
-            'Havanoposdesk_odoo/core/static/src/js/user_menu_hide.js',
+            'Havanoposdesk_odoo/static/src/js/user_menu_hide.js',
         ],
     },
 }
