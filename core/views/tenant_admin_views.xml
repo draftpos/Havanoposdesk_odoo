@@ -64,6 +64,8 @@ else:
             </field>
         </record>
         <menuitem id="menu_my_subscription" name="My Subscription" parent="menu_my_business_root" action="action_my_subscription" sequence="40"/>
+        
+        <menuitem id="menu_my_business_settings" name="Settings" parent="menu_my_business_root" action="action_havanoposdesk_settings_my_business" sequence="100"/>
     </data>
 </odoo>
 

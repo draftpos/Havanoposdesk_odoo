@@ -162,7 +162,8 @@ class SaleLine(models.Model):
 
     @api.onchange('accepted_qty', 'product_id')
     def _onchange_qty(self):
-        if self.product_id and self.accepted_qty > self.product_id.opening_stock:
+        allow_negative = self.env['ir.config_parameter'].sudo().get_param('havanoposdesk.allow_negative_stock', 'True') == 'True'
+        if not allow_negative and self.product_id and self.accepted_qty > self.product_id.opening_stock:
             return {
                 'warning': {
                     'title': 'Insufficient Stock',
@@ -172,8 +173,9 @@ class SaleLine(models.Model):
 
     @api.constrains('accepted_qty')
     def _check_stock(self):
+        allow_negative = self.env['ir.config_parameter'].sudo().get_param('havanoposdesk.allow_negative_stock', 'True') == 'True'
         for line in self:
             if line.accepted_qty < 0:
                 raise ValidationError("Quantity cannot be negative.")
-            if line.product_id and line.accepted_qty > line.product_id.opening_stock:
+            if not allow_negative and line.product_id and line.accepted_qty > line.product_id.opening_stock:
                 raise ValidationError(f"You cannot sell {line.accepted_qty} of {line.product_id.name} because you only have {line.product_id.opening_stock} on hand.")

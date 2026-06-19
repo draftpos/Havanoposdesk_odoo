@@ -21,6 +21,7 @@
         'core/views/subscription_views.xml',
         'core/views/terminal_views.xml',
         'core/views/tenant_views.xml',
+        'core/views/res_config_settings_views.xml',
         'core/views/tenant_admin_views.xml',
         'sales/views/sale_views.xml',
         'suppliers/views/supplier_views.xml',

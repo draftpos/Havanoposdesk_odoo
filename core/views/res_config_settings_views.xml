@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.havanoposdesk</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="50"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                
+                <!-- My Business Settings -->
+                <app data-string="My Business" string="My Business" name="havanoposdesk_my_business" groups="base.group_user">
+                    <block title="Business Configuration" name="business_config">
+                        <div>
+                            <p class="text-muted">General settings for your business will go here.</p>
+                        </div>
+                    </block>
+                </app>
+                
+                <!-- Sales Settings -->
+                <app data-string="Sales" string="Sales" name="havanoposdesk_sales" groups="base.group_user">
+                    <block title="Sales Configuration" name="sales_config">
+                        <div>
+                            <p class="text-muted">Point of Sale and Sales settings will go here.</p>
+                        </div>
+                    </block>
+                </app>
+                
+                <!-- Stock Settings -->
+                <app data-string="Stock" string="Stock" name="havanoposdesk_stock" groups="base.group_user">
+                    <block title="Inventory Operations" name="stock_config">
+                        <setting id="allow_negative_stock_setting" help="Allow selling products even when their quantity on hand is zero or less. Purchasing more will compensate the negative balance automatically.">
+                            <field name="havano_allow_negative_stock" widget="boolean_toggle"/>
+                        </setting>
+                    </block>
+                </app>
+
+                <!-- Accounts Settings -->
+                <app data-string="Accounts" string="Accounts" name="havanoposdesk_accounts" groups="base.group_user">
+                    <block title="Accounting Configuration" name="accounts_config">
+                        <div>
+                            <p class="text-muted">Chart of accounts, taxes, and accounting settings will go here.</p>
+                        </div>
+                    </block>
+                </app>
+                
+                <!-- Suppliers Settings -->
+                <app data-string="Suppliers" string="Suppliers" name="havanoposdesk_suppliers" groups="base.group_user">
+                    <block title="Purchasing Configuration" name="suppliers_config">
+                        <div>
+                            <p class="text-muted">Supplier and purchasing settings will go here.</p>
+                        </div>
+                    </block>
+                </app>
+
+            </xpath>
+        </field>
+    </record>
+    
+    <!-- Actions for each app to open the exact app settings -->
+    <record id="action_havanoposdesk_settings_my_business" model="ir.actions.act_window">
+        <field name="name">Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="context">{'module': 'havanoposdesk_my_business'}</field>
+    </record>
+
+    <record id="action_havanoposdesk_settings_sales" model="ir.actions.act_window">
+        <field name="name">Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="context">{'module': 'havanoposdesk_sales'}</field>
+    </record>
+
+    <record id="action_havanoposdesk_settings_stock" model="ir.actions.act_window">
+        <field name="name">Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="context">{'module': 'havanoposdesk_stock'}</field>
+    </record>
+
+    <record id="action_havanoposdesk_settings_accounts" model="ir.actions.act_window">
+        <field name="name">Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="context">{'module': 'havanoposdesk_accounts'}</field>
+    </record>
+
+    <record id="action_havanoposdesk_settings_suppliers" model="ir.actions.act_window">
+        <field name="name">Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="context">{'module': 'havanoposdesk_suppliers'}</field>
+    </record>
+</odoo>
