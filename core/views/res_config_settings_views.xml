@@ -6,7 +6,20 @@
         <field name="priority" eval="50"/>
         <field name="inherit_id" ref="base.res_config_settings_view_form"/>
         <field name="arch" type="xml">
+            <!-- Hide native General Settings tab -->
+            <xpath expr="//app[@name='general_settings']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
             <xpath expr="//form" position="inside">
+                <!-- SaaS Config Settings -->
+                <app data-string="SaaS Config" string="SaaS Config" name="havanoposdesk_saas" groups="base.group_system">
+                    <block title="SaaS Administration" name="saas_config">
+                        <div>
+                            <p class="text-muted">Global SaaS settings, users, and tenants configuration.</p>
+                        </div>
+                    </block>
+                </app>
                 
                 <!-- My Business Settings -->
                 <app data-string="My Business" string="My Business" name="havanoposdesk_my_business" groups="base.group_user">
