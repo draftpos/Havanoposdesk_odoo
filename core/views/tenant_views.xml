@@ -85,6 +85,16 @@
                                        readonly="not context.get('is_super_admin', False)"/>
                             </group>
                         </group>
+                        <group string="API &amp; Integration Settings">
+                            <group>
+                                <field name="api_company_name"/>
+                                <field name="api_currency"/>
+                            </group>
+                            <group>
+                                <field name="api_cost_center" placeholder="Defaults to Store name if blank"/>
+                                <field name="api_warehouse" placeholder="Defaults to Store name if blank"/>
+                            </group>
+                        </group>
                     </sheet>
                 </form>
             </field>
