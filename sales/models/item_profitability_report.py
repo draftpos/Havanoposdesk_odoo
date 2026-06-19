@@ -9,8 +9,8 @@ class ItemProfitabilityReport(models.Model):
     item_code = fields.Char(string='Item Code', readonly=True)
     name = fields.Char(string='Item Name', readonly=True)
     qty = fields.Float(string='Qty Sold', readonly=True)
-    cost_price = fields.Float(string='Cost Price', readonly=True)
-    selling_price = fields.Float(string='Avg Selling Price', readonly=True)
+    cost_price = fields.Float(string='Buying Price', readonly=True)
+    selling_price = fields.Float(string='Selling Price', readonly=True)
     profit = fields.Float(string='Profit', readonly=True)
     profit_margin = fields.Float(string='Profit Margin (%)', readonly=True)
     tenant_id = fields.Many2one('havanoposdesk.tenant', string='Tenant', readonly=True)
@@ -25,11 +25,11 @@ class ItemProfitabilityReport(models.Model):
                     p.item_code,
                     p.name,
                     SUM(l.accepted_qty) as qty,
-                    p.cost_price as cost_price,
+                    p.buying_price as cost_price,
                     SUM(l.amount) / NULLIF(SUM(l.accepted_qty), 0) as selling_price,
-                    SUM(l.amount) - (SUM(l.accepted_qty) * p.cost_price) as profit,
+                    SUM(l.amount) - (SUM(l.accepted_qty) * p.buying_price) as profit,
                     CASE WHEN SUM(l.amount) > 0 THEN 
-                        ((SUM(l.amount) - (SUM(l.accepted_qty) * p.cost_price)) / SUM(l.amount)) * 100 
+                        ((SUM(l.amount) - (SUM(l.accepted_qty) * p.buying_price)) / SUM(l.amount)) * 100 
                     ELSE 0 END as profit_margin,
                     l.tenant_id
                 FROM
@@ -37,6 +37,6 @@ class ItemProfitabilityReport(models.Model):
                 JOIN
                     havanoposdesk_product p ON p.id = l.product_id
                 GROUP BY
-                    l.product_id, p.item_code, p.name, p.cost_price, l.tenant_id
+                    l.product_id, p.item_code, p.name, p.buying_price, l.tenant_id
             )
         """ % (self._table,))
