@@ -27,6 +27,7 @@ class Sale(models.Model):
         ('account', 'On Account')
     ], string='Payment Status', default='account', required=True)
     account_id = fields.Many2one('havanoposdesk.account', string='Deposit Account', domain="[('type', 'in', ['Cash', 'Bank'])]")
+    pos_payment_id = fields.Many2one('havanoposdesk.payment', string='POS Payment Batch')
     
     line_ids = fields.One2many('havanoposdesk.sale.line', 'sale_id', string='Items')
 
@@ -123,6 +124,7 @@ class Sale(models.Model):
                             existing_payment.account_id.balance += sale.amount_total
                         else:
                             existing_payment.account_id.balance -= sale.amount_total
+                    sale.pos_payment_id = existing_payment.id
                 else:
                     payment = self.env['havanoposdesk.payment'].create({
                         'payment_type': payment_type,
@@ -133,6 +135,7 @@ class Sale(models.Model):
                         'date': fields.Date.context_today(self),
                     })
                     payment.action_post()
+                    sale.pos_payment_id = payment.id
 
             for line in sale.line_ids:
                 if line.accepted_qty > 0:

@@ -32,6 +32,7 @@ class Payment(models.Model):
     amount = fields.Float(string='Amount', required=True, default=0.0)
     date = fields.Date(string='Date', default=fields.Date.context_today, required=True)
     reference = fields.Char(string='Memo / Reference')
+    pos_sale_ids = fields.One2many('havanoposdesk.sale', 'pos_payment_id', string='POS Sales Breakdown')
     
     state = fields.Selection([
         ('draft', 'Draft'),
