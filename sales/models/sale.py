@@ -27,6 +27,7 @@ class Sale(models.Model):
         ('account', 'On Account')
     ], string='Payment Status', default='account', required=True)
     account_id = fields.Many2one('havanoposdesk.account', string='Deposit Account', domain="[('type', 'in', ['Cash', 'Bank'])]")
+    pos_payment_id = fields.Many2one('havanoposdesk.payment', string='POS Payment Batch')
     
     line_ids = fields.One2many('havanoposdesk.sale.line', 'sale_id', string='Items')
 
@@ -107,15 +108,34 @@ class Sale(models.Model):
             # Auto-create payment if cash
             if sale.payment_status == 'cash' and sale.account_id:
                 payment_type = 'payment' if sale.is_return else 'receipt'
-                payment = self.env['havanoposdesk.payment'].create({
-                    'payment_type': payment_type,
-                    'partner_type': 'customer',
-                    'customer_id': sale.customer.id,
-                    'account_id': sale.account_id.id,
-                    'amount': sale.amount_total,
-                    'reference': sale.name,
-                })
-                payment.action_post()
+                
+                existing_payment = self.env['havanoposdesk.payment'].search([
+                    ('date', '=', fields.Date.context_today(self)),
+                    ('reference', '=', 'POS Payments'),
+                    ('account_id', '=', sale.account_id.id),
+                    ('payment_type', '=', payment_type),
+                    ('state', 'in', ['draft', 'posted']),
+                ], limit=1)
+
+                if existing_payment:
+                    existing_payment.amount += sale.amount_total
+                    if existing_payment.state == 'posted':
+                        if payment_type == 'receipt':
+                            existing_payment.account_id.balance += sale.amount_total
+                        else:
+                            existing_payment.account_id.balance -= sale.amount_total
+                    sale.pos_payment_id = existing_payment.id
+                else:
+                    payment = self.env['havanoposdesk.payment'].create({
+                        'payment_type': payment_type,
+                        'partner_type': 'customer',
+                        'account_id': sale.account_id.id,
+                        'amount': sale.amount_total,
+                        'reference': 'POS Payments',
+                        'date': fields.Date.context_today(self),
+                    })
+                    payment.action_post()
+                    sale.pos_payment_id = payment.id
 
             for line in sale.line_ids:
                 if line.accepted_qty > 0:

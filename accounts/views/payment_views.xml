@@ -48,6 +48,19 @@
                                 <field name="reference" class="border-bottom border-dark" readonly="state != 'draft'"/>
                             </group>
                         </group>
+                        <notebook invisible="reference != 'POS Payments'">
+                            <page string="POS Sales Breakdown">
+                                <field name="pos_sale_ids" readonly="1">
+                                    <list>
+                                        <field name="date"/>
+                                        <field name="name" string="Sale Reference"/>
+                                        <field name="customer"/>
+                                        <field name="store"/>
+                                        <field name="amount_total" sum="Total"/>
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
                     </sheet>
                 </form>
             </field>
@@ -60,7 +73,8 @@
             <field name="arch" type="xml">
                 <list string="Payments" decoration-muted="state == 'cancelled'">
                     <field name="date"/>
-                    <field name="name"/>
+                    <field name="name" string="Number"/>
+                    <field name="reference" string="Memo/Reference"/>
                     <field name="payment_type"/>
                     <field name="customer_id" optional="show"/>
                     <field name="supplier_id" optional="show"/>
