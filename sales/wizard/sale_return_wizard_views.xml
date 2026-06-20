@@ -16,11 +16,11 @@
                         </group>
                         <field name="line_ids">
                             <list editable="bottom" create="0" delete="0">
-                                <field name="product_id" readonly="1"/>
-                                <field name="qty_sold" readonly="1"/>
+                                <field name="product_id" readonly="1" force_save="1"/>
+                                <field name="qty_sold" readonly="1" force_save="1"/>
                                 <field name="qty_returned"/>
-                                <field name="rate" readonly="1"/>
-                                <field name="tax_ids" widget="many2many_tags" readonly="1"/>
+                                <field name="rate" readonly="1" force_save="1"/>
+                                <field name="tax_ids" widget="many2many_tags" readonly="1" force_save="1"/>
                             </list>
                         </field>
                     </sheet>

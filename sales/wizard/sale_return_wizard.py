@@ -15,20 +15,25 @@ class SaleReturnWizard(models.TransientModel):
             sale = self.env['havanoposdesk.sale'].browse(self.env.context.get('active_id'))
             res['sale_id'] = sale.id
             
-            # Check if there are any existing returns for this sale
-            if any(r.is_return for r in sale.return_sale_ids):
-                raise ValidationError("You cannot perform multiple partial returns. Please return all remaining items in a single credit note, or create a standalone Credit Note.")
+            # Calculate already returned quantities per product
+            returned_qtys = {}
+            for ret in sale.return_sale_ids:
+                if ret.state != 'cancel':
+                    for rl in ret.line_ids:
+                        returned_qtys[rl.product_id.id] = returned_qtys.get(rl.product_id.id, 0.0) + rl.accepted_qty
 
             lines = []
             for line in sale.line_ids:
-                lines.append((0, 0, {
-                    'sale_line_id': line.id,
-                    'product_id': line.product_id.id,
-                    'qty_sold': line.accepted_qty,
-                    'qty_returned': 0.0,
-                    'rate': line.rate,
-                    'tax_ids': [(6, 0, line.tax_ids.ids)],
-                }))
+                remaining_qty = line.accepted_qty - returned_qtys.get(line.product_id.id, 0.0)
+                if remaining_qty > 0:
+                    lines.append((0, 0, {
+                        'sale_line_id': line.id,
+                        'product_id': line.product_id.id,
+                        'qty_sold': remaining_qty,
+                        'qty_returned': 0.0,
+                        'rate': line.rate,
+                        'tax_ids': [(6, 0, line.tax_ids.ids)],
+                    }))
             res['line_ids'] = lines
         return res
 
@@ -40,6 +45,14 @@ class SaleReturnWizard(models.TransientModel):
         
         if not return_lines:
             raise ValidationError("You must specify a return quantity greater than 0 for at least one item.")
+            
+        # Check if they are doing a second partial return
+        has_existing_returns = any(r.state != 'cancel' for r in self.sale_id.return_sale_ids)
+        if has_existing_returns:
+            total_remaining = sum(l.qty_sold for l in self.line_ids)
+            total_returning = sum(l.qty_returned for l in self.line_ids)
+            if total_returning < total_remaining:
+                raise ValidationError("You cannot perform multiple partial returns. Please return all remaining items in a single credit note, or create a standalone Credit Note.")
             
         sale_vals = {
             'is_return': True,
