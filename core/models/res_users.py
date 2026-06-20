@@ -24,6 +24,10 @@ class ResUsers(models.Model):
     api_cost_center = fields.Char(string="API Cost Center")
     api_warehouse = fields.Char(string="API Warehouse")
 
+    allow_discount = fields.Boolean(string="Allow Discount", default=True)
+    max_discount_percent = fields.Float(string="Max Discount Percent", default=100.0)
+    require_shift = fields.Boolean(string="Require Shift", default=False)
+
     @api.model
     def check_access_rights(self, operation, raise_exception=True):
         if self.env.user.havano_role == 'admin' and operation in ('read', 'write', 'create', 'search'):
