@@ -14,6 +14,12 @@ class StockAdjustment(models.Model):
         return self.env['havanoposdesk.store'].search([('is_default', '=', True)], limit=1).id
 
     name = fields.Char(string='Reference', required=True, copy=False, readonly=True, default=lambda self: 'New')
+    tenant_id = fields.Many2one(
+        'havanoposdesk.tenant', 
+        string='Tenant', 
+        required=True, 
+        default=lambda self: self.env.user.tenant_id.id or (self.env['havanoposdesk.tenant'].search([], limit=1) or self.env['havanoposdesk.tenant'].create({'name': 'Default Tenant'})).id
+    )
     store_id = fields.Many2one('havanoposdesk.store', string='Store', default=_default_store_id)
     posting_date = fields.Date(string='Posting Date', default=fields.Date.context_today)
     posting_time = fields.Float(string='Posting Time', default=_default_posting_time)
@@ -138,6 +144,12 @@ class StockAdjustmentLine(models.Model):
     _name = 'havanoposdesk.stock.adjustment.line'
     _description = 'Stock Adjustment Line'
 
+    tenant_id = fields.Many2one(
+        'havanoposdesk.tenant', 
+        string='Tenant', 
+        required=True, 
+        default=lambda self: self.env.user.tenant_id.id or (self.env['havanoposdesk.tenant'].search([], limit=1) or self.env['havanoposdesk.tenant'].create({'name': 'Default Tenant'})).id
+    )
     adjustment_id = fields.Many2one('havanoposdesk.stock.adjustment', string='Stock Adjustment', required=True, ondelete='cascade')
     product_id = fields.Many2one('havanoposdesk.product', string='Item', required=True)
     item_code = fields.Char(related='product_id.item_code', string='Item Code', readonly=True)

@@ -18,5 +18,19 @@
         <record id="base.menu_administration" model="ir.ui.menu">
             <field name="group_ids" eval="[(6, 0, [ref('base.group_system')])]"/>
         </record>
+
+        <!-- Hide native Settings top menus -->
+        <record id="base.menu_translation" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="base.menu_custom" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="base.menu_config" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="base.menu_users" model="ir.ui.menu">
+            <field name="active" eval="False"/>
+        </record>
     </data>
 </odoo>

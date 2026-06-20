@@ -1,3 +1,5 @@
+import odoo.orm.environments
+from odoo.orm import environments
 from odoo import http
 from odoo.http import request
 import json
@@ -969,6 +971,8 @@ class HavanoPOSDeskAPI(http.Controller):
             store_domain = []
             if user.havano_role != 'super_admin' and tenant:
                 store_domain.append(('tenant_id', '=', tenant.id))
+            class env:
+                pass
             store = env['havanoposdesk.store'].sudo().search(store_domain, limit=1)
         store_name = store.name if store else ''
         

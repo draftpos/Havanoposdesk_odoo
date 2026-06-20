@@ -5,6 +5,12 @@ class StockValuation(models.Model):
     _description = 'Stock Valuation'
 
     product_id = fields.Many2one('havanoposdesk.product', string='Product', required=True)
+    tenant_id = fields.Many2one(
+        'havanoposdesk.tenant', 
+        string='Tenant', 
+        required=True, 
+        default=lambda self: self.env.user.tenant_id.id or (self.env['havanoposdesk.tenant'].search([], limit=1) or self.env['havanoposdesk.tenant'].create({'name': 'Default Tenant'})).id
+    )
     item_name = fields.Char(related='product_id.name', string='Item Name', store=True)
     item_code = fields.Char(related='product_id.item_code', string='Code', store=True)
     category_id = fields.Many2one(related='product_id.category_id', string='Category', store=True)
@@ -24,6 +30,12 @@ class StockLedger(models.Model):
     _description = 'Stock Ledger'
 
     product_id = fields.Many2one('havanoposdesk.product', string='Product', required=True)
+    tenant_id = fields.Many2one(
+        'havanoposdesk.tenant', 
+        string='Tenant', 
+        required=True, 
+        default=lambda self: self.env.user.tenant_id.id or (self.env['havanoposdesk.tenant'].search([], limit=1) or self.env['havanoposdesk.tenant'].create({'name': 'Default Tenant'})).id
+    )
     item_name = fields.Char(related='product_id.name', string='Item Name', store=True)
     item_code = fields.Char(related='product_id.item_code', string='Code', store=True)
     uom_id = fields.Many2one(related='product_id.uom_id', string='UOM', store=True)

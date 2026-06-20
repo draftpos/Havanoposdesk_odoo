@@ -20,3 +20,7 @@ access_havanoposdesk_subscription_payment,havanoposdesk.subscription.payment,mod
 access_havanoposdesk_tenant_upgrade_wizard,havanoposdesk.tenant.upgrade.wizard,model_havanoposdesk_tenant_upgrade_wizard,base.group_user,1,1,1,1
 access_havanoposdesk_subscription_pay_wizard,havanoposdesk.subscription.pay.wizard,model_havanoposdesk_subscription_pay_wizard,base.group_user,1,1,1,1
 access_havanoposdesk_customer_group,havanoposdesk.customer.group,model_havanoposdesk_customer_group,base.group_user,1,1,1,1
+access_havanoposdesk_account_user,havanoposdesk.account user,model_havanoposdesk_account,base.group_user,1,1,1,1
+access_havanoposdesk_expense_user,havanoposdesk.expense user,model_havanoposdesk_expense,base.group_user,1,1,1,1
+access_havanoposdesk_item_profitability_report_user,havanoposdesk.item.profitability.report user,model_havanoposdesk_item_profitability_report,base.group_user,1,0,0,0
+access_havanoposdesk_tax_user,havanoposdesk.tax user,model_havanoposdesk_tax,base.group_user,1,1,1,1
