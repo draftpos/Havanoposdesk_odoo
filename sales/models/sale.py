@@ -107,15 +107,32 @@ class Sale(models.Model):
             # Auto-create payment if cash
             if sale.payment_status == 'cash' and sale.account_id:
                 payment_type = 'payment' if sale.is_return else 'receipt'
-                payment = self.env['havanoposdesk.payment'].create({
-                    'payment_type': payment_type,
-                    'partner_type': 'customer',
-                    'customer_id': sale.customer.id,
-                    'account_id': sale.account_id.id,
-                    'amount': sale.amount_total,
-                    'reference': sale.name,
-                })
-                payment.action_post()
+                
+                existing_payment = self.env['havanoposdesk.payment'].search([
+                    ('date', '=', fields.Date.context_today(self)),
+                    ('reference', '=', 'POS Payments'),
+                    ('account_id', '=', sale.account_id.id),
+                    ('payment_type', '=', payment_type),
+                    ('state', 'in', ['draft', 'posted']),
+                ], limit=1)
+
+                if existing_payment:
+                    existing_payment.amount += sale.amount_total
+                    if existing_payment.state == 'posted':
+                        if payment_type == 'receipt':
+                            existing_payment.account_id.balance += sale.amount_total
+                        else:
+                            existing_payment.account_id.balance -= sale.amount_total
+                else:
+                    payment = self.env['havanoposdesk.payment'].create({
+                        'payment_type': payment_type,
+                        'partner_type': 'customer',
+                        'account_id': sale.account_id.id,
+                        'amount': sale.amount_total,
+                        'reference': 'POS Payments',
+                        'date': fields.Date.context_today(self),
+                    })
+                    payment.action_post()
 
             for line in sale.line_ids:
                 if line.accepted_qty > 0:

@@ -33,11 +33,12 @@ class Customer(models.Model):
     payment_ids = fields.One2many('havanoposdesk.payment', 'customer_id', string='Payments')
     balance = fields.Float(string='Balance', compute='_compute_balance', store=False)
 
-    @api.depends('sale_ids.amount_total', 'sale_ids.is_return', 'payment_ids.amount', 'payment_ids.payment_type', 'payment_ids.state')
+    @api.depends('sale_ids.amount_total', 'sale_ids.is_return', 'sale_ids.payment_status', 'payment_ids.amount', 'payment_ids.payment_type', 'payment_ids.state')
     def _compute_balance(self):
         for record in self:
-            normal_sales = sum(record.sale_ids.filtered(lambda s: not s.is_return).mapped('amount_total'))
-            return_sales = sum(record.sale_ids.filtered(lambda s: s.is_return).mapped('amount_total'))
+            account_sales = record.sale_ids.filtered(lambda s: s.payment_status == 'account')
+            normal_sales = sum(account_sales.filtered(lambda s: not s.is_return).mapped('amount_total'))
+            return_sales = sum(account_sales.filtered(lambda s: s.is_return).mapped('amount_total'))
             total_sales = normal_sales - return_sales
             
             posted_payments = record.payment_ids.filtered(lambda p: p.state == 'posted')
