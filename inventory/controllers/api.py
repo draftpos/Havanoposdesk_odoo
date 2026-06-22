@@ -971,7 +971,7 @@ class HavanoPOSDeskAPI(http.Controller):
             store_domain = []
             if user.havano_role != 'super_admin' and tenant:
                 store_domain.append(('tenant_id', '=', tenant.id))
-            store = request.env['havanoposdesk.store'].sudo().search(store_domain, limit=1)
+            store = env['havanoposdesk.store'].sudo().search(store_domain, limit=1)
         store_name = store.name if store else ''
         
         company_name = user.api_company_name or (tenant.api_company_name if tenant else False) or (tenant.name if tenant else False) or user.company_id.name or 'Havano Co'
@@ -2714,8 +2714,225 @@ class HavanoPOSDeskAPI(http.Controller):
             if custom_cr:
                 custom_cr.close()
 
-    @http.route('/api/method/frappe.desk.query_report.run', auth='public', methods=['POST', 'OPTIONS'], type='http', csrf=False, cors='*')
-    def api_query_report_run(self, **kwargs):
+    @http.route('/api/method/havano_pos_integration.api.get_modified_products', auth='public', methods=['GET', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_get_modified_products(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+
+        import time
+        return self._make_json_response({
+            "message": {
+                "products": [],
+                "deleted_items": [],
+                "server_time": time.strftime('%Y-%m-%d %H:%M:%S')
+            }
+        })
+
+    @http.route('/api/method/havano_pos_integration.api.get_stock_update', auth='public', methods=['GET', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_get_stock_update(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+
+        token = request.httprequest.headers.get('Authorization')
+        params = request.httprequest.args.to_dict()
+        uid, login = self._verify_token(token)
+        if not uid:
+            user = self._get_user()
+            uid = user.id
+
+        item_code = params.get('item_code')
+        env, custom_cr = self._get_env(user_id=uid)
+        try:
+            product = env['havanoposdesk.product'].search([('item_code', '=', item_code)], limit=1)
+            qty = product.opening_stock if product else 0.0
+            return self._make_json_response({
+                "message": {
+                    "stock": [
+                        {
+                            "item_code": item_code,
+                            "warehouse": "Stores - AT",
+                            "actual_qty": qty
+                        }
+                    ]
+                }
+            })
+        finally:
+            if custom_cr:
+                custom_cr.close()
+
+    @http.route('/api/method/saas_api.www.api.get_single_customer', auth='public', methods=['GET', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_get_single_customer(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+
+        token = request.httprequest.headers.get('Authorization')
+        params = request.httprequest.args.to_dict()
+        uid, login = self._verify_token(token)
+        if not uid:
+            user = self._get_user()
+            uid = user.id
+
+        customer_name = params.get('customer_name')
+        env, custom_cr = self._get_env(user_id=uid)
+        try:
+            customer = env['havanoposdesk.customer'].search([('name', '=', customer_name)], limit=1)
+            if not customer:
+                return self._make_json_response({
+                    "message": {
+                        "status": "success",
+                        "customer": None
+                    }
+                })
+            return self._make_json_response({
+                "message": {
+                    "status": "success",
+                    "customer": {
+                        "name": customer.name,
+                        "customer_name": customer.name,
+                        "customer_group": customer.customer_group_id.name or "Individual",
+                        "mobile_no": customer.phone or ""
+                    }
+                }
+            })
+        finally:
+            if custom_cr:
+                custom_cr.close()
+
+    @http.route('/api/method/saas_api.www.api.get_modified_customers', auth='public', methods=['GET', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_get_modified_customers(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+        return self._make_json_response({
+            "message": {
+                "status": "success",
+                "customers": []
+            }
+        })
+
+    @http.route('/api/method/saas_api.www.api.get_mobile_settings', auth='public', methods=['GET', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_get_mobile_settings(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+
+        token = request.httprequest.headers.get('Authorization')
+        uid, login = self._verify_token(token)
+        if not uid:
+            user = self._get_user()
+            uid = user.id
+
+        env, custom_cr = self._get_env(user_id=uid)
+        try:
+            user_rec = env['res.users'].browse(uid)
+            allow_discount = 1 if getattr(user_rec, 'allow_discount', True) else 0
+            max_discount_percent = getattr(user_rec, 'max_discount_percent', 100.0)
+            require_shift = 1 if getattr(user_rec, 'require_shift', False) else 0
+
+            return self._make_json_response({
+                "message": {
+                    "settings": {
+                        "allow_discount": allow_discount,
+                        "max_discount_percent": max_discount_percent,
+                        "require_shift": require_shift
+                    }
+                }
+            })
+        finally:
+            if custom_cr:
+                custom_cr.close()
+
+    @http.route('/api/method/saas_api.www.api.get_item_profitability', auth='public', methods=['GET', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_get_item_profitability(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+        return self._make_json_response({
+            "message": {
+                "status": "success",
+                "data": []
+            }
+        })
+
+    # SHIFT MANAGEMENT SYSTEM
+    @http.route('/api/method/saas_api.www.api.open_shift', auth='public', methods=['POST', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_open_shift(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+
+        token = request.httprequest.headers.get('Authorization')
+        uid, login = self._verify_token(token)
+        if not uid:
+            user = self._get_user()
+            uid = user.id
+
+        import time
+        shift_id = f"SHIFT-{uid}-{time.strftime('%Y%m%d%H%M%S')}"
+        return self._make_json_response({
+            "message": {
+                "status": "success",
+                "shift": {
+                    "name": shift_id,
+                    "status": "Open",
+                    "opening_time": time.strftime('%Y-%m-%d %H:%M:%S')
+                }
+            }
+        })
+
+    @http.route('/api/method/saas_api.www.api.close_shift', auth='public', methods=['POST', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_close_shift(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+
+        params = self._get_request_json()
+        import time
+        return self._make_json_response({
+            "message": {
+                "status": "success",
+                "shift": {
+                    "name": params.get('name') or "SHIFT-CURRENT",
+                    "status": "Closed",
+                    "closing_time": time.strftime('%Y-%m-%d %H:%M:%S')
+                }
+            }
+        })
+
+    @http.route('/api/method/saas_api.www.api.get_current_shift', auth='public', methods=['GET', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_get_current_shift(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+
+        token = request.httprequest.headers.get('Authorization')
+        uid, login = self._verify_token(token)
+        if not uid:
+            user = self._get_user()
+            uid = user.id
+
+        import time
+        shift_id = f"SHIFT-{uid}-ACTIVE"
+        return self._make_json_response({
+            "message": {
+                "status": "success",
+                "shift": {
+                    "name": shift_id,
+                    "status": "Open",
+                    "opening_time": time.strftime('%Y-%m-%d 00:00:00')
+                }
+            }
+        })
+
+    @http.route('/api/method/saas_api.www.api.get_shift_reports', auth='public', methods=['GET', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_get_shift_reports(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+
+        return self._make_json_response({
+            "message": {
+                "status": "success",
+                "shifts": [],
+                "total_count": 0
+            }
+        })
+
+    @http.route('/api/method/saas_api.www.api.fetch_pos_sync_settings', auth='public', methods=['GET', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_fetch_pos_sync_settings(self, **kwargs):
         if request.httprequest.method == 'OPTIONS':
             return self._make_json_response({}, status=200)
 
@@ -2729,106 +2946,259 @@ class HavanoPOSDeskAPI(http.Controller):
         try:
             user = env['res.users'].browse(uid)
             tenant = user.tenant_id
+            company_name = user.api_company_name or (tenant.api_company_name if tenant else False) or (tenant.name if tenant else False) or user.company_id.name or 'Havano POS Company'
+            store = user.default_store_id or (user.store_ids[0] if user.store_ids else False)
+            if not store:
+                store_domain = []
+                if user.havano_role != 'super_admin' and tenant:
+                    store_domain.append(('tenant_id', '=', tenant.id))
+                store = env['havanoposdesk.store'].search(store_domain, limit=1)
+            store_name = store.name if store else ''
+            warehouse = user.api_warehouse or (tenant.api_warehouse if tenant else False) or store_name
 
-            try:
-                data = json.loads(request.httprequest.data)
-            except Exception:
-                return self._make_json_response({"error": "Invalid JSON body"}, status=400)
+            # Fetch default customer dynamically from database
+            default_customer = env['havanoposdesk.customer'].sudo().search([
+                '|', ('name', 'ilike', 'Default'), ('name', 'ilike', 'Walk-in')
+            ], limit=1)
+            if not default_customer:
+                default_customer = env['havanoposdesk.customer'].sudo().search([], limit=1)
+            default_customer_name = default_customer.name if default_customer else "Walk-in Customer"
 
-            report_name = data.get('report_name')
-            filters = data.get('filters', {})
-
-            if report_name == 'Sales by Cashier':
-                cashier_email = filters.get('cashier')
-                domain = []
-                if cashier_email:
-                    cashier_user = env['res.users'].search([('login', '=', cashier_email)], limit=1)
-                    if cashier_user:
-                        domain.append(('salesperson_id', '=', cashier_user.id))
-                if tenant:
-                    domain.append(('tenant_id', '=', tenant.id))
-                if filters.get('from_date'):
-                    domain.append(('posting_date', '>=', filters['from_date']))
-                if filters.get('to_date'):
-                    domain.append(('posting_date', '<=', filters['to_date']))
-
-                sales = env['havanoposdesk.sale'].search(domain)
-                total_sales = sum(sales.mapped('amount_total'))
-                invoice_count = len(sales)
-
-                return self._make_json_response({
-                    "message": {
-                        "result": [
-                            {
-                                "total_sales": total_sales,
-                                "invoice_count": invoice_count
-                            }
-                        ]
-                    }
-                })
-
-            elif report_name == 'Profitability Analysis':
-                domain = []
-                if tenant:
-                    domain.append(('tenant_id', '=', tenant.id))
-                if filters.get('from_date'):
-                    domain.append(('posting_date', '>=', filters['from_date']))
-                if filters.get('to_date'):
-                    domain.append(('posting_date', '<=', filters['to_date']))
-                
-                cost_center = filters.get('cost_center')
-                if cost_center:
-                    store = env['havanoposdesk.store'].search([('name', '=', cost_center)], limit=1)
-                    if store:
-                        domain.append(('store_id', '=', store.id))
-
-                sales = env['havanoposdesk.sale'].search(domain)
-                income = sum(sales.mapped('amount_total'))
-
-                expense = 0.0
-                for sale in sales:
-                    for line in sale.line_ids:
-                        qty = line.accepted_qty or 0.0
-                        buy_price = line.product_id.buying_price or 0.0
-                        expense += qty * buy_price
-
-                gross_profit_loss = income - expense
-
-                cost_center_name = cost_center or "Total"
-                result = [
-                    {
-                        "account": cost_center_name,
-                        "account_name": cost_center_name,
-                        "income": income,
-                        "expense": expense,
-                        "gross_profit_loss": gross_profit_loss,
+            return self._make_json_response({
+                "message": {
+                    "status": "success",
+                    "settings": {
+                        "company_name": company_name,
+                        "default_warehouse": warehouse,
+                        "default_customer": default_customer_name,
                         "currency": "USD"
                     }
-                ]
-                if cost_center_name != "Total":
-                    result.append({
-                        "account": "Total",
-                        "account_name": "Total",
-                        "income": income,
-                        "expense": expense,
-                        "gross_profit_loss": gross_profit_loss,
-                        "currency": "USD"
-                    })
-
-                return self._make_json_response({
-                    "message": {
-                        "result": result
-                    }
-                })
-
-            else:
-                return self._make_json_response({"error": f"Report '{report_name}' not supported"}, status=400)
-
-        except Exception as e:
-            return self._make_json_response({"error": str(e)}, status=500)
+                }
+            })
         finally:
             if custom_cr:
                 custom_cr.close()
+
+    @http.route('/api/method/saas_api.www.api.get_user_data', auth='public', methods=['GET', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_get_user_data(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+
+        token = request.httprequest.headers.get('Authorization')
+        uid, login = self._verify_token(token)
+        
+        env = None
+        custom_cr = None
+        
+        if not uid:
+            user = self._get_user()
+            env = request.env
+        else:
+            env, custom_cr = self._get_env(user_id=uid)
+            user = env['res.users'].browse(uid)
+
+        try:
+            names = (user.name or "").split(' ', 1)
+            first_name = names[0] if names else ""
+            last_name = names[1] if len(names) > 1 else ""
+
+            store = user.default_store_id or (user.store_ids[0] if user.store_ids else False)
+            if not store:
+                store_domain = []
+                if user.havano_role != 'super_admin' and user.tenant_id:
+                    store_domain.append(('tenant_id', '=', user.tenant_id.id))
+                store = env['havanoposdesk.store'].sudo().search(store_domain, limit=1)
+            store_name = store.name if store else ''
+
+            warehouse = user.api_warehouse or (user.tenant_id.api_warehouse if user.tenant_id else False) or store_name
+            cost_center = user.api_cost_center or (user.tenant_id.api_cost_center if user.tenant_id else False) or store_name
+
+            tenant = user.tenant_id
+            company_name = user.api_company_name or (tenant.api_company_name if tenant else False) or (tenant.name if tenant else False) or user.company_id.name or 'Havano Co'
+
+            default_customer = env['havanoposdesk.customer'].sudo().search([
+                '|', ('name', 'ilike', 'Default'), ('name', 'ilike', 'Walk-in')
+            ], limit=1)
+            if not default_customer:
+                default_customer = env['havanoposdesk.customer'].sudo().search([], limit=1)
+            default_customer_name = default_customer.name if default_customer else "Walk-in Customer"
+
+            response_data = {
+                "message": {
+                    "status": "success",
+                    "user": {
+                        "first_name": first_name,
+                        "last_name": last_name,
+                        "gender": "",
+                        "birth_date": "",
+                        "mobile_no": user.phone or "",
+                        "username": user.name or "",
+                        "full_name": user.name or "",
+                        "email": user.login or "",
+                        "warehouse": warehouse,
+                        "cost_center": cost_center,
+                        "default_customer": default_customer_name,
+                        "company": company_name,
+                        "role": user.havano_role or "admin"
+                    }
+                }
+            }
+            return self._make_json_response(response_data)
+        finally:
+            if custom_cr:
+                custom_cr.close()
+
+    @http.route('/api/method/havano_pos_integration.api.get_warehouses', auth='public', methods=['GET', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_get_warehouses_list(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+
+        token = request.httprequest.headers.get('Authorization')
+        uid, login = self._verify_token(token)
+        if not uid:
+            user = self._get_user()
+            uid = user.id
+
+        env, custom_cr = self._get_env(user_id=uid)
+        try:
+            user = env['res.users'].browse(uid)
+            tenant = user.tenant_id
+            
+            domain = []
+            if user.havano_role != 'super_admin' and tenant:
+                domain.append(('tenant_id', '=', tenant.id))
+                
+            stores = env['havanoposdesk.store'].search(domain)
+            result = []
+            for s in stores:
+                valuations = env['havanoposdesk.stock.valuation'].sudo().search([
+                    ('store', '=', s.name)
+                ])
+                total_qty = sum(v.on_hand_qty for v in valuations)
+                total_val = sum(v.value_cost for v in valuations)
+                
+                company_name = s.tenant_id.api_company_name or s.tenant_id.name or "Havano POS Company"
+                
+                result.append({
+                    "name": s.name,
+                    "warehouse_name": s.name,
+                    "company": company_name,
+                    "account": None,
+                    "warehouse_type": "Transit" if "transit" in s.name.lower() else None,
+                    "total_quantity": total_qty,
+                    "total_value": total_val
+                })
+            return self._make_json_response({"message": result})
+        finally:
+            if custom_cr:
+                custom_cr.close()
+
+    @http.route('/api/resource/Warehouse', auth='public', methods=['GET', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_resource_warehouses(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+
+        token = request.httprequest.headers.get('Authorization')
+        uid, login = self._verify_token(token)
+        if not uid:
+            user = self._get_user()
+            uid = user.id
+
+        env, custom_cr = self._get_env(user_id=uid)
+        try:
+            user = env['res.users'].browse(uid)
+            tenant = user.tenant_id
+            
+            domain = []
+            if user.havano_role != 'super_admin' and tenant:
+                domain.append(('tenant_id', '=', tenant.id))
+            
+            stores = env['havanoposdesk.store'].search(domain)
+            result = []
+            for s in stores:
+                valuations = env['havanoposdesk.stock.valuation'].sudo().search([
+                    ('store', '=', s.name)
+                ])
+                total_qty = sum(v.on_hand_qty for v in valuations)
+                total_val = sum(v.value_cost for v in valuations)
+                
+                company_name = s.tenant_id.api_company_name or s.tenant_id.name or "Havano POS Company"
+                
+                result.append({
+                    "name": s.name,
+                    "warehouse_name": s.name,
+                    "company": company_name,
+                    "account": None,
+                    "warehouse_type": "Transit" if "transit" in s.name.lower() else None,
+                    "total_quantity": total_qty,
+                    "total_value": total_val
+                })
+            return self._make_json_response({"data": result})
+        finally:
+            if custom_cr:
+                custom_cr.close()
+
+    @http.route('/api/resource/Cost Center', auth='public', methods=['GET', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_resource_cost_centers(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+
+        token = request.httprequest.headers.get('Authorization')
+        uid, login = self._verify_token(token)
+        if not uid:
+            user = self._get_user()
+            uid = user.id
+
+        env, custom_cr = self._get_env(user_id=uid)
+        try:
+            user = env['res.users'].browse(uid)
+            tenant = user.tenant_id
+            
+            domain = []
+            if user.havano_role != 'super_admin' and tenant:
+                domain.append(('tenant_id', '=', tenant.id))
+            
+            stores = env['havanoposdesk.store'].search(domain)
+            result = []
+            company_name = user.api_company_name or (tenant.name if tenant else "Havano POS Company")
+            for s in stores:
+                result.append({
+                    "name": s.name,
+                    "cost_center_name": s.name,
+                    "company": company_name
+                })
+            return self._make_json_response({"data": result})
+        finally:
+            if custom_cr:
+                custom_cr.close()
+
+    @http.route([
+        '/api/resource/Tax Category',
+        '/api/resource/Tax%20Category'
+    ], auth='public', methods=['GET', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_resource_tax_categories(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+
+        # Tax categories expected by POS frontend are VAT, EXEMPT, Food Tax
+        result = [
+            {"name": "VAT", "title": "VAT"},
+            {"name": "EXEMPT", "title": "EXEMPT"},
+            {"name": "Food Tax", "title": "Food Tax"}
+        ]
+        return self._make_json_response({"data": result})
+
+    @http.route([
+        '/api/method/frappe.handler.version',
+        '/api/method/frappe.auth.get_version'
+    ], auth='public', methods=['GET', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_get_version(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+        return self._make_json_response({
+            "message": "15.0.0"
+        })
+
 
 
     @http.route('/api/method/saas_api.www.api.get_my_product_bundles', auth='public', methods=['GET', 'OPTIONS'], type='http', csrf=False, cors='*')
