@@ -23,6 +23,11 @@
                                 <field name="api_cost_center" placeholder="Defaults to default store if blank"/>
                                 <field name="api_warehouse" placeholder="Defaults to default store if blank"/>
                             </group>
+                            <group string="POS Settings">
+                                <field name="allow_discount"/>
+                                <field name="max_discount_percent"/>
+                                <field name="require_shift"/>
+                            </group>
                         </group>
                     </page>
                 </xpath>
