@@ -39,3 +39,18 @@ class ResConfigSettings(models.TransientModel):
         related='tenant_id.allow_multi_currency',
         readonly=False
     )
+
+    havano_verification_grace_number = fields.Integer(
+        string="Verification Grace Number",
+        config_parameter="havanoposdesk.verification_grace_number",
+        default=24,
+        help="The amount of time a user has to verify their email before their account is suspended."
+    )
+    havano_verification_grace_unit = fields.Selection([
+        ('hours', 'Hours'),
+        ('days', 'Days')
+    ], string="Verification Grace Unit",
+        config_parameter="havanoposdesk.verification_grace_unit",
+        default='hours',
+        help="Unit of time for the grace period (Hours or Days)."
+    )

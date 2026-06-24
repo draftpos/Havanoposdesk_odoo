@@ -3909,7 +3909,7 @@ class HavanoPOSDeskAPI(http.Controller):
                     'login': email,
                     'password': password,
                     'havano_role': 'admin',
-                    'saas_state': 'verified',
+                    'saas_state': 'unverified',
                     'tenant_id': tenant.id,
                     'phone': phone_number,
                     'default_store_id': store.id,
@@ -3929,6 +3929,20 @@ class HavanoPOSDeskAPI(http.Controller):
                     'group_ids': [(4, internal_group.id)]
                 })
 
+                ICPSudo = env['ir.config_parameter'].sudo()
+                try:
+                    grace_number = int(ICPSudo.get_param('havanoposdesk.verification_grace_number', '24') or '24')
+                except ValueError:
+                    grace_number = 24
+                grace_unit = ICPSudo.get_param('havanoposdesk.verification_grace_unit', 'hours')
+                
+                import datetime
+                if grace_unit == 'days':
+                    expiry_dt = datetime.datetime.now() + datetime.timedelta(days=grace_number)
+                else:
+                    expiry_dt = datetime.datetime.now() + datetime.timedelta(hours=grace_number)
+                expiry_date = expiry_dt.strftime('%Y-%m-%d %H:%M:%S')
+
                 return self._make_json_response({
                     "message": {
                         "status": "success",
@@ -3936,7 +3950,7 @@ class HavanoPOSDeskAPI(http.Controller):
                         "data": {
                             "verification": {
                                 "sent_to": email,
-                                "expiry_date": "2030-01-01"
+                                "expiry_date": expiry_date
                             }
                         }
                     }
@@ -4193,3 +4207,156 @@ class HavanoPOSDeskAPI(http.Controller):
         finally:
             if custom_cr:
                 custom_cr.close()
+
+    @http.route('/web/verify_email', type='http', auth='public', methods=['GET'])
+    def api_verify_email(self, token=None, **kwargs):
+        if not token:
+            return self._render_verification_result(False, "Missing verification token.")
+        
+        env = request.env
+        user = env['res.users'].sudo().search([('verification_token', '=', token)], limit=1)
+        if not user:
+            return self._render_verification_result(False, "Invalid or expired verification token.")
+            
+        if user.saas_state == 'verified':
+            return self._render_verification_result(True, "Your email has already been verified.", already_verified=True)
+            
+        try:
+            user.sudo().action_verify_user()
+            return self._render_verification_result(True, "Your email has been verified successfully!")
+        except Exception as e:
+            return self._render_verification_result(False, f"Verification failed: {str(e)}")
+
+    def _render_verification_result(self, success, message, already_verified=False):
+        theme_color = "#28a745" if success else "#dc3545"
+        icon_svg = """
+            <svg class="success-icon" viewBox="0 0 24 24" width="72" height="72">
+                <circle cx="12" cy="12" r="10" fill="none" stroke="#28a745" stroke-width="2"/>
+                <path d="M6 12l4 4 8-8" fill="none" stroke="#28a745" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        """ if success else """
+            <svg class="error-icon" viewBox="0 0 24 24" width="72" height="72">
+                <circle cx="12" cy="12" r="10" fill="none" stroke="#dc3545" stroke-width="2"/>
+                <path d="M8 8l8 8M16 8l-8 8" fill="none" stroke="#dc3545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        """
+        
+        title = "Email Verified" if success else "Verification Error"
+        
+        html_content = f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>{title} - Havano POS Desk</title>
+            <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+            <style>
+                body {{
+                    margin: 0;
+                    padding: 0;
+                    font-family: 'Outfit', sans-serif;
+                    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                    color: #f8fafc;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                }}
+                .card {{
+                    background: rgba(30, 41, 59, 0.7);
+                    backdrop-filter: blur(16px);
+                    -webkit-backdrop-filter: blur(16px);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 24px;
+                    padding: 48px 32px;
+                    width: 100%;
+                    max-width: 440px;
+                    text-align: center;
+                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+                    box-sizing: border-box;
+                    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+                }}
+                @keyframes slideUp {{
+                    from {{ opacity: 0; transform: translateY(20px); }}
+                    to {{ opacity: 1; transform: translateY(0); }}
+                }}
+                .icon-container {{
+                    margin-bottom: 24px;
+                    display: flex;
+                    justify-content: center;
+                }}
+                .success-icon circle {{
+                    stroke-dasharray: 63;
+                    stroke-dashoffset: 63;
+                    animation: drawCircle 0.6s ease-out forwards;
+                }}
+                .success-icon path {{
+                    stroke-dasharray: 20;
+                    stroke-dashoffset: 20;
+                    animation: drawCheck 0.4s 0.5s ease-out forwards;
+                }}
+                .error-icon circle {{
+                    stroke-dasharray: 63;
+                    stroke-dashoffset: 63;
+                    animation: drawCircle 0.6s ease-out forwards;
+                }}
+                .error-icon path {{
+                    stroke-dasharray: 30;
+                    stroke-dashoffset: 30;
+                    animation: drawCross 0.4s 0.5s ease-out forwards;
+                }}
+                @keyframes drawCircle {{
+                    to {{ stroke-dashoffset: 0; }}
+                }}
+                @keyframes drawCheck {{
+                    to {{ stroke-dashoffset: 0; }}
+                }}
+                @keyframes drawCross {{
+                    to {{ stroke-dashoffset: 0; }}
+                }}
+                h1 {{
+                    font-size: 28px;
+                    font-weight: 600;
+                    margin: 0 0 12px 0;
+                    letter-spacing: -0.5px;
+                }}
+                p {{
+                    font-size: 16px;
+                    color: #94a3b8;
+                    line-height: 1.6;
+                    margin: 0 0 32px 0;
+                }}
+                .btn {{
+                    display: inline-block;
+                    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+                    color: #ffffff;
+                    text-decoration: none;
+                    font-weight: 500;
+                    padding: 14px 32px;
+                    border-radius: 12px;
+                    transition: transform 0.2s, box-shadow 0.2s;
+                    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+                }}
+                .btn:hover {{
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+                }}
+                .btn:active {{
+                    transform: translateY(0);
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <div class="icon-container">
+                    {icon_svg}
+                </div>
+                <h1>{title}</h1>
+                <p>{message}</p>
+                <a href="/web/login" class="btn">Proceed to Login</a>
+            </div>
+        </body>
+        </html>
+        """
+        return request.make_response(html_content, headers=[('Content-Type', 'text/html')])

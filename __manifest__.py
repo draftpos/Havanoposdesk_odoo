@@ -12,6 +12,7 @@
     'depends': ['base', 'web', 'base_setup', 'auth_signup', 'payment', 'havano_payments', 'mail', 'spreadsheet_dashboard', 'utm'],
     'data': [
         'core/views/hide_menus.xml',
+        'core/data/cron.xml',
         'security/ir.model.access.csv',
         'security/security_rules.xml',
         'inventory/data/sequence.xml',
