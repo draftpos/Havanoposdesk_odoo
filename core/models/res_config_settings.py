@@ -39,6 +39,11 @@ class ResConfigSettings(models.TransientModel):
         related='tenant_id.allow_multi_currency',
         readonly=False
     )
+    biz_allow_advanced_pricing = fields.Boolean(
+        string="Allow Advanced Pricing",
+        related='tenant_id.allow_advanced_pricing',
+        readonly=False
+    )
 
     havano_verification_grace_number = fields.Integer(
         string="Verification Grace Number",
