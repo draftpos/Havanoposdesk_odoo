@@ -176,6 +176,47 @@ class HavanoPOSDeskAPI(http.Controller):
                 "token_string": token_str,
                 "token": token_base64
             }
+
+            user_agent = request.httprequest.headers.get('User-Agent', '').lower()
+            app_version = request.httprequest.headers.get('app_version') or request.httprequest.headers.get('app-version')
+            is_mobile = app_version or 'dart' in user_agent or 'havano' in user_agent or 'postman' in user_agent
+
+            if is_mobile:
+                role_val = "tenant_admin" if user.havano_role == "admin" else ("cashier" if user.havano_role == "user" else user.havano_role)
+                shops_data = []
+                if user.tenant_id:
+                    shops = user_env['havanoposdesk.store'].sudo().search([('tenant_id', '=', user.tenant_id.id)])
+                    for s in shops:
+                        terminals = user_env['havanoposdesk.pos.terminal'].sudo().search([('store_id', '=', s.id)])
+                        terminals_data = []
+                        for t in terminals:
+                            terminals_data.append({
+                                "id": t.id,
+                                "name": t.name,
+                                "status": t.status,
+                                "is_taken": bool(t.taken_by_user_id),
+                                "taken_by_user_id": t.taken_by_user_id.id if t.taken_by_user_id else None
+                            })
+                        shops_data.append({
+                            "id": s.id,
+                            "name": s.name,
+                            "terminals": terminals_data
+                        })
+
+                res_data.update({
+                    "access_token": token_base64,
+                    "refresh_token": token_base64
+                })
+                res_data["user"].update({
+                    "id": user.id,
+                    "email": user.login,
+                    "role": role_val,
+                    "tenant_id": user.tenant_id.id if user.tenant_id else None,
+                    "shops": shops_data,
+                    "selected_shop_id": user.selected_shop_id.id if user.selected_shop_id else None,
+                    "selected_terminal_id": user.selected_terminal_id.id if user.selected_terminal_id else None
+                })
+
             return request.make_response(json.dumps(res_data), headers=[('Content-Type', 'application/json')])
         except Exception as e:
             return request.make_response(json.dumps({'error': 'Authentication failed', 'message': str(e)}), headers=[('Content-Type', 'application/json')], status=401)
@@ -3899,9 +3940,17 @@ class HavanoPOSDeskAPI(http.Controller):
                 tenant = env['havanoposdesk.tenant'].create(tenant_vals)
 
                 store = env['havanoposdesk.store'].create({
-                    'name': 'Store A',
+                    'name': 'Default Shop',
                     'tenant_id': tenant.id,
                     'is_default': True
+                })
+
+                # Create 1 POS Terminal (status: open) for the shop
+                terminal = env['havanoposdesk.pos.terminal'].create({
+                    'name': 'Terminal 1',
+                    'tenant_id': tenant.id,
+                    'store_id': store.id,
+                    'status': 'open',
                 })
 
                 user_vals = {
@@ -3915,8 +3964,8 @@ class HavanoPOSDeskAPI(http.Controller):
                     'default_store_id': store.id,
                     'store_ids': [(4, store.id)],
                     'api_company_name': company_name or f"{first_name}'s Business",
-                    'api_warehouse': 'Store A',
-                    'api_cost_center': 'Store A',
+                    'api_warehouse': 'Default Shop',
+                    'api_cost_center': 'Default Shop',
                     'company_id': company_id,
                     'company_ids': [(6, 0, [company_id])],
                     'active': True,
@@ -4360,3 +4409,213 @@ class HavanoPOSDeskAPI(http.Controller):
         </html>
         """
         return request.make_response(html_content, headers=[('Content-Type', 'text/html')])
+
+    # NEW AUTHENTICATION & SHOP/TERMINAL SELECTION ENDPOINTS
+    @http.route('/api/user/shops', auth='public', methods=['GET', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_get_shops(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+
+        token = request.httprequest.headers.get('Authorization')
+        uid, login = self._verify_token(token)
+        if not uid:
+            uid = request.session.uid
+        if not uid:
+            return self._make_json_response({"error": "Unauthorized"}, status=401)
+
+        env, custom_cr = self._get_env(user_id=uid)
+        try:
+            user = env['res.users'].browse(uid)
+            if not user.tenant_id:
+                return self._make_json_response({"error": "No shops available for this user"}, status=400)
+
+            shops = env['havanoposdesk.store'].sudo().search([('tenant_id', '=', user.tenant_id.id)])
+            if not shops:
+                return self._make_json_response({"error": "No shops available for this user"}, status=400)
+
+            shops_data = []
+            for s in shops:
+                terminals = env['havanoposdesk.pos.terminal'].sudo().search([('store_id', '=', s.id)])
+                terminals_data = []
+                for t in terminals:
+                    terminals_data.append({
+                        "id": t.id,
+                        "name": t.name,
+                        "status": t.status,
+                        "is_taken": bool(t.taken_by_user_id),
+                        "taken_by_user_id": t.taken_by_user_id.id if t.taken_by_user_id else None
+                    })
+                shops_data.append({
+                    "id": s.id,
+                    "name": s.name,
+                    "terminals": terminals_data
+                })
+            return self._make_json_response(shops_data, status=200)
+        except Exception as e:
+            return self._make_json_response({"error": str(e)}, status=500)
+        finally:
+            if custom_cr:
+                custom_cr.close()
+
+    @http.route('/api/user/select-shop', auth='public', methods=['POST', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_select_shop(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+
+        token = request.httprequest.headers.get('Authorization')
+        uid, login = self._verify_token(token)
+        if not uid:
+            uid = request.session.uid
+        if not uid:
+            return self._make_json_response({"error": "Unauthorized"}, status=401)
+
+        env, custom_cr = self._get_env(user_id=uid)
+        try:
+            try:
+                data = json.loads(request.httprequest.data)
+            except Exception:
+                return self._make_json_response({"error": "Invalid JSON body"}, status=400)
+
+            shop_id = data.get('shop_id')
+            if not shop_id:
+                return self._make_json_response({"error": "shop_id is required"}, status=400)
+
+            user = env['res.users'].browse(uid)
+            shop = env['havanoposdesk.store'].sudo().browse(shop_id)
+            if not shop.exists() or (user.tenant_id and shop.tenant_id.id != user.tenant_id.id):
+                return self._make_json_response({"error": "Invalid shop selection"}, status=400)
+
+            user.sudo().write({'selected_shop_id': shop.id})
+            
+            user_data = self._get_user_info_dict(user, env)
+            return self._make_json_response({"user": user_data}, status=200)
+        except Exception as e:
+            if custom_cr:
+                custom_cr.rollback()
+            return self._make_json_response({"error": str(e)}, status=500)
+        finally:
+            if custom_cr:
+                custom_cr.close()
+
+    @http.route('/api/user/select-terminal', auth='public', methods=['POST', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_select_terminal(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+
+        token = request.httprequest.headers.get('Authorization')
+        uid, login = self._verify_token(token)
+        if not uid:
+            uid = request.session.uid
+        if not uid:
+            return self._make_json_response({"error": "Unauthorized"}, status=401)
+
+        env, custom_cr = self._get_env(user_id=uid)
+        try:
+            try:
+                data = json.loads(request.httprequest.data)
+            except Exception:
+                return self._make_json_response({"error": "Invalid JSON body"}, status=400)
+
+            terminal_id = data.get('terminal_id')
+            if not terminal_id:
+                return self._make_json_response({"error": "terminal_id is required"}, status=400)
+
+            user = env['res.users'].browse(uid)
+            terminal = env['havanoposdesk.pos.terminal'].sudo().browse(terminal_id)
+            if not terminal.exists() or (user.tenant_id and terminal.tenant_id.id != user.tenant_id.id):
+                return self._make_json_response({"error": "Terminal does not exist or does not belong to this tenant"}, status=400)
+
+            # Cashier checks: cashier can only select open terminals
+            if user.havano_role != 'admin' and user.havano_role != 'super_admin':
+                if terminal.status == 'taken':
+                    return self._make_json_response({"error": "Terminal is already in use"}, status=400)
+                elif terminal.status != 'open':
+                    return self._make_json_response({"error": "No open terminals available"}, status=400)
+
+            # If it was previously taking a terminal, release it
+            old_terminal = env['havanoposdesk.pos.terminal'].sudo().search([('taken_by_user_id', '=', user.id)])
+            if old_terminal:
+                old_terminal.write({'status': 'open', 'taken_by_user_id': False})
+
+            # Update selected terminal
+            user.sudo().write({'selected_terminal_id': terminal.id})
+            terminal.write({
+                'status': 'taken',
+                'taken_by_user_id': user.id
+            })
+
+            user_data = self._get_user_info_dict(user, env)
+            return self._make_json_response({"user": user_data}, status=200)
+        except Exception as e:
+            if custom_cr:
+                custom_cr.rollback()
+            return self._make_json_response({"error": str(e)}, status=500)
+        finally:
+            if custom_cr:
+                custom_cr.close()
+
+    @http.route('/api/user/current-session', auth='public', methods=['GET', 'OPTIONS'], type='http', csrf=False, cors='*')
+    def api_get_current_session(self, **kwargs):
+        if request.httprequest.method == 'OPTIONS':
+            return self._make_json_response({}, status=200)
+
+        token = request.httprequest.headers.get('Authorization')
+        uid, login = self._verify_token(token)
+        if not uid:
+            uid = request.session.uid
+        if not uid:
+            return self._make_json_response({"error": "Unauthorized"}, status=401)
+
+        env, custom_cr = self._get_env(user_id=uid)
+        try:
+            user = env['res.users'].browse(uid)
+            res_data = {
+                "selected_shop_id": user.selected_shop_id.id if user.selected_shop_id else None,
+                "selected_terminal_id": user.selected_terminal_id.id if user.selected_terminal_id else None
+            }
+            return self._make_json_response(res_data, status=200)
+        except Exception as e:
+            return self._make_json_response({"error": str(e)}, status=500)
+        finally:
+            if custom_cr:
+                custom_cr.close()
+
+    def _get_user_info_dict(self, user, env):
+        names = (user.name or "").split(' ', 1)
+        first_name = names[0] if names else ""
+        last_name = names[1] if len(names) > 1 else ""
+        role_val = "tenant_admin" if user.havano_role == "admin" else ("cashier" if user.havano_role == "user" else user.havano_role)
+
+        # Get shops data
+        shops_data = []
+        if user.tenant_id:
+            shops = env['havanoposdesk.store'].sudo().search([('tenant_id', '=', user.tenant_id.id)])
+            for s in shops:
+                terminals = env['havanoposdesk.pos.terminal'].sudo().search([('store_id', '=', s.id)])
+                terminals_data = []
+                for t in terminals:
+                    terminals_data.append({
+                        "id": t.id,
+                        "name": t.name,
+                        "status": t.status,
+                        "is_taken": bool(t.taken_by_user_id),
+                        "taken_by_user_id": t.taken_by_user_id.id if t.taken_by_user_id else None
+                    })
+                shops_data.append({
+                    "id": s.id,
+                    "name": s.name,
+                    "terminals": terminals_data
+                })
+
+        return {
+            "id": user.id,
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": user.login or "",
+            "username": user.name or "",
+            "role": role_val,
+            "tenant_id": user.tenant_id.id if user.tenant_id else None,
+            "shops": shops_data,
+            "selected_shop_id": user.selected_shop_id.id if user.selected_shop_id else None,
+            "selected_terminal_id": user.selected_terminal_id.id if user.selected_terminal_id else None
+        }

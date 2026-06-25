@@ -20,10 +20,14 @@ class HavanoposdeskPosTerminal(models.Model):
         default=lambda self: self.env.user.default_store_id.id or self.env['havanoposdesk.store'].search([('tenant_id', '=', self.env.user.tenant_id.id)], limit=1).id
     )
     user_id = fields.Many2one('res.users', string='Assigned Cashier')
+    taken_by_user_id = fields.Many2one('res.users', string='Taken By User')
     status = fields.Selection([
+        ('open', 'Open'),
+        ('closed', 'Closed'),
+        ('taken', 'Taken'),
         ('online', 'Online'),
         ('offline', 'Offline')
-    ], string='Status', default='offline')
+    ], string='Status', default='open')
 
     @api.model_create_multi
     def create(self, vals_list):
