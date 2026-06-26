@@ -146,9 +146,26 @@ class ResUsers(models.Model):
             users = super().create(vals_list)
 
         tenant_admin_group = self.env.ref('havanoposdesk_odoo.group_tenant_admin', raise_if_not_found=False)
+        erp_manager_group = self.env.ref('base.group_erp_manager', raise_if_not_found=False)
         for user in users:
-            if user.havano_role == 'admin' and tenant_admin_group:
-                user.sudo().with_context(bypass_sync_role_groups=True).write({'group_ids': [(4, tenant_admin_group.id, 0)]})
+            if user.havano_role == 'admin':
+                # Admin: grant Tenant Admin group + Settings (group_erp_manager)
+                group_cmds = []
+                if tenant_admin_group and tenant_admin_group not in user.groups_id:
+                    group_cmds.append((4, tenant_admin_group.id, 0))
+                if erp_manager_group and erp_manager_group not in user.groups_id:
+                    group_cmds.append((4, erp_manager_group.id, 0))
+                if group_cmds:
+                    user.sudo().with_context(bypass_sync_role_groups=True).write({'group_ids': group_cmds})
+            elif user.havano_role == 'user':
+                # Cashier: ensure they don't have admin groups
+                group_cmds = []
+                if erp_manager_group and erp_manager_group in user.groups_id:
+                    group_cmds.append((3, erp_manager_group.id, 0))
+                if tenant_admin_group and tenant_admin_group in user.groups_id:
+                    group_cmds.append((3, tenant_admin_group.id, 0))
+                if group_cmds:
+                    user.sudo().with_context(bypass_sync_role_groups=True).write({'group_ids': group_cmds})
             if user.saas_state == 'unverified' and user.verification_token:
                 user.sudo().send_verification_email()
 
@@ -169,14 +186,26 @@ class ResUsers(models.Model):
 
         if ('havano_role' in vals or 'group_ids' in vals) and not self.env.context.get('bypass_sync_role_groups'):
             tenant_admin_group = self.env.ref('havanoposdesk_odoo.group_tenant_admin', raise_if_not_found=False)
-            if tenant_admin_group:
-                for user in self:
-                    if user.havano_role == 'admin':
-                        if tenant_admin_group not in user.group_ids:
-                            user.sudo().with_context(bypass_sync_role_groups=True).write({'group_ids': [(4, tenant_admin_group.id, 0)]})
-                    else:
-                        if tenant_admin_group in user.group_ids:
-                            user.sudo().with_context(bypass_sync_role_groups=True).write({'group_ids': [(3, tenant_admin_group.id, 0)]})
+            erp_manager_group = self.env.ref('base.group_erp_manager', raise_if_not_found=False)
+            for user in self:
+                if user.havano_role == 'admin':
+                    # Admin: ensure they have both Tenant Admin group and Settings group
+                    group_cmds = []
+                    if tenant_admin_group and tenant_admin_group not in user.groups_id:
+                        group_cmds.append((4, tenant_admin_group.id, 0))
+                    if erp_manager_group and erp_manager_group not in user.groups_id:
+                        group_cmds.append((4, erp_manager_group.id, 0))
+                    if group_cmds:
+                        user.sudo().with_context(bypass_sync_role_groups=True).write({'group_ids': group_cmds})
+                else:
+                    # Cashier/other: strip admin and settings groups
+                    group_cmds = []
+                    if tenant_admin_group and tenant_admin_group in user.groups_id:
+                        group_cmds.append((3, tenant_admin_group.id, 0))
+                    if erp_manager_group and erp_manager_group in user.groups_id:
+                        group_cmds.append((3, erp_manager_group.id, 0))
+                    if group_cmds:
+                        user.sudo().with_context(bypass_sync_role_groups=True).write({'group_ids': group_cmds})
         return res
 
     def action_verify_user(self):
@@ -229,12 +258,20 @@ class ResUsers(models.Model):
         portal_group = self.env.ref('base.group_portal')
         internal_group = self.env.ref('base.group_user')
 
-        user.sudo().write({
-            'group_ids': [
-                (3, portal_group.id, 0),    # Unlink portal
-                (4, internal_group.id, 0),  # Link internal
-            ]
-        })
+        erp_manager_group = self.env.ref('base.group_erp_manager', raise_if_not_found=False)
+        tenant_admin_grp = self.env.ref('havanoposdesk_odoo.group_tenant_admin', raise_if_not_found=False)
+
+        group_cmds = [
+            (3, portal_group.id, 0),    # Unlink portal
+            (4, internal_group.id, 0),  # Link internal user
+        ]
+        # New tenant admin from self-signup → grant Settings icon access
+        if erp_manager_group:
+            group_cmds.append((4, erp_manager_group.id, 0))
+        if tenant_admin_grp:
+            group_cmds.append((4, tenant_admin_grp.id, 0))
+
+        user.sudo().write({'group_ids': group_cmds})
 
         return user
 

@@ -50,6 +50,7 @@
     'installable': True,
     'application': True,
     'license': 'LGPL-3',
+    'post_migrate': 'havanoposdesk_odoo.post_migrate',
     'assets': {
         'web.assets_backend': [
             'havanoposdesk_odoo/static/src/js/user_menu_hide.js',
