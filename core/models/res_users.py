@@ -151,18 +151,18 @@ class ResUsers(models.Model):
             if user.havano_role == 'admin':
                 # Admin: grant Tenant Admin group + Settings (group_erp_manager)
                 group_cmds = []
-                if tenant_admin_group and tenant_admin_group not in user.groups_id:
+                if tenant_admin_group and tenant_admin_group not in user.group_ids:
                     group_cmds.append((4, tenant_admin_group.id, 0))
-                if erp_manager_group and erp_manager_group not in user.groups_id:
+                if erp_manager_group and erp_manager_group not in user.group_ids:
                     group_cmds.append((4, erp_manager_group.id, 0))
                 if group_cmds:
                     user.sudo().with_context(bypass_sync_role_groups=True).write({'group_ids': group_cmds})
             elif user.havano_role == 'user':
                 # Cashier: ensure they don't have admin groups
                 group_cmds = []
-                if erp_manager_group and erp_manager_group in user.groups_id:
+                if erp_manager_group and erp_manager_group in user.group_ids:
                     group_cmds.append((3, erp_manager_group.id, 0))
-                if tenant_admin_group and tenant_admin_group in user.groups_id:
+                if tenant_admin_group and tenant_admin_group in user.group_ids:
                     group_cmds.append((3, tenant_admin_group.id, 0))
                 if group_cmds:
                     user.sudo().with_context(bypass_sync_role_groups=True).write({'group_ids': group_cmds})
@@ -191,18 +191,18 @@ class ResUsers(models.Model):
                 if user.havano_role == 'admin':
                     # Admin: ensure they have both Tenant Admin group and Settings group
                     group_cmds = []
-                    if tenant_admin_group and tenant_admin_group not in user.groups_id:
+                    if tenant_admin_group and tenant_admin_group not in user.group_ids:
                         group_cmds.append((4, tenant_admin_group.id, 0))
-                    if erp_manager_group and erp_manager_group not in user.groups_id:
+                    if erp_manager_group and erp_manager_group not in user.group_ids:
                         group_cmds.append((4, erp_manager_group.id, 0))
                     if group_cmds:
                         user.sudo().with_context(bypass_sync_role_groups=True).write({'group_ids': group_cmds})
                 else:
                     # Cashier/other: strip admin and settings groups
                     group_cmds = []
-                    if tenant_admin_group and tenant_admin_group in user.groups_id:
+                    if tenant_admin_group and tenant_admin_group in user.group_ids:
                         group_cmds.append((3, tenant_admin_group.id, 0))
-                    if erp_manager_group and erp_manager_group in user.groups_id:
+                    if erp_manager_group and erp_manager_group in user.group_ids:
                         group_cmds.append((3, erp_manager_group.id, 0))
                     if group_cmds:
                         user.sudo().with_context(bypass_sync_role_groups=True).write({'group_ids': group_cmds})

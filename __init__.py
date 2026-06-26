@@ -23,9 +23,9 @@ def post_migrate(cr, registry):
     admins = env['res.users'].with_context(active_test=False).search([('havano_role', '=', 'admin')])
     for user in admins:
         group_cmds = []
-        if erp_manager_group not in user.groups_id:
+        if erp_manager_group not in user.group_ids:
             group_cmds.append((4, erp_manager_group.id, 0))
-        if tenant_admin_group and tenant_admin_group not in user.groups_id:
+        if tenant_admin_group and tenant_admin_group not in user.group_ids:
             group_cmds.append((4, tenant_admin_group.id, 0))
         if group_cmds:
             user.sudo().write({'group_ids': group_cmds})
@@ -34,9 +34,9 @@ def post_migrate(cr, registry):
     cashiers = env['res.users'].with_context(active_test=False).search([('havano_role', '=', 'user')])
     for user in cashiers:
         group_cmds = []
-        if erp_manager_group in user.groups_id:
+        if erp_manager_group in user.group_ids:
             group_cmds.append((3, erp_manager_group.id, 0))
-        if tenant_admin_group and tenant_admin_group in user.groups_id:
+        if tenant_admin_group and tenant_admin_group in user.group_ids:
             group_cmds.append((3, tenant_admin_group.id, 0))
         if group_cmds:
             user.sudo().write({'group_ids': group_cmds})
