@@ -2,9 +2,10 @@
 <odoo>
     <data noupdate="0">
         <!-- Custom group for Tenant Admins -->
+        <!-- implied_ids includes group_erp_manager so the Settings icon appears on the home screen -->
         <record id="group_tenant_admin" model="res.groups">
             <field name="name">Tenant Admin</field>
-            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user')), (4, ref('base.group_erp_manager'))]"/>
         </record>
 
         <!-- Tenant Model Isolation Rule -->

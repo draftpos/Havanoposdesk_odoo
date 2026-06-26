@@ -12,35 +12,37 @@
             <field name="group_ids" eval="[(6, 0, [ref('base.group_system')])]"/>
         </record>
 
-        <!-- Ensure Apps is restricted to system admin only -->
+        <!-- Apps menu: system admin only -->
         <record id="base.menu_management" model="ir.ui.menu">
             <field name="group_ids" eval="[(6, 0, [ref('base.group_system')])]"/>
         </record>
 
-        <!-- Settings top-level icon: grant access to Tenant Admins AND system admins -->
-        <record id="base.menu_administration" model="ir.ui.menu">
-            <field name="group_ids" eval="[(6, 0, [ref('base.group_system'), ref('havanoposdesk_odoo.group_tenant_admin')])]"/>
-        </record>
+        <!--
+            Settings top-level icon (base.menu_administration):
+            group_tenant_admin now implies base.group_erp_manager, which is the
+            native group that controls Settings visibility. No override needed here —
+            the icon will appear for Tenant Admins automatically via implied groups.
+        -->
 
-        <!-- Hide "General Settings" inside Settings from Tenant Admins (system only) -->
+        <!-- Hide "General Settings" tab inside Settings: system admin only -->
         <record id="base.menu_config" model="ir.ui.menu">
             <field name="active" eval="True"/>
             <field name="group_ids" eval="[(6, 0, [ref('base.group_system')])]"/>
         </record>
 
-        <!-- Hide Translations (system only) -->
+        <!-- Hide Translations: system admin only -->
         <record id="base.menu_translation" model="ir.ui.menu">
             <field name="active" eval="True"/>
             <field name="group_ids" eval="[(6, 0, [ref('base.group_system')])]"/>
         </record>
 
-        <!-- Hide Technical (system only) -->
+        <!-- Hide Technical: system admin only -->
         <record id="base.menu_custom" model="ir.ui.menu">
             <field name="active" eval="True"/>
             <field name="group_ids" eval="[(6, 0, [ref('base.group_system')])]"/>
         </record>
 
-        <!-- Hide Users &amp; Companies inside Settings from Tenant Admins (system only) -->
+        <!-- Hide Users &amp; Companies: system admin only -->
         <record id="base.menu_users" model="ir.ui.menu">
             <field name="active" eval="True"/>
             <field name="group_ids" eval="[(6, 0, [ref('base.group_system')])]"/>

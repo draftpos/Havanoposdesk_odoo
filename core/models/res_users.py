@@ -8,8 +8,8 @@ class ResUsers(models.Model):
     
     havano_role = fields.Selection([
         ('super_admin', 'Super Admin'),
-        ('admin', 'Tenant Admin'),
-        ('user', 'User/Cashier')
+        ('admin', 'Admin'),
+        ('user', 'Cashier')
     ], string="Havano Role", default='user')
     tenant_id = fields.Many2one('havanoposdesk.tenant', string="Tenant")
     saas_state = fields.Selection([
