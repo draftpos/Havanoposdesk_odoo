@@ -13,6 +13,7 @@
     'data': [
         'security/security_rules.xml',
         'security/ir.model.access.csv',
+        'security/access_rights.xml',
         'core/views/hide_menus.xml',
         'core/data/cron.xml',
         'inventory/data/sequence.xml',
