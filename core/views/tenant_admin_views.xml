@@ -4,6 +4,18 @@
         <!-- My Business Root Menu (visible to tenant admins) -->
         <menuitem id="menu_my_business_root" name="My Business" sequence="5" groups="base.group_user"/>
 
+        <!--
+            Settings icon for Tenant Admins.
+            This is a brand-new menu record owned by our addon — it shows up
+            immediately after module upgrade with no dependency on base record overrides.
+        -->
+        <menuitem id="menu_tenant_admin_settings_root"
+            name="Settings"
+            web_icon="base,static/description/settings.png"
+            sequence="550"
+            groups="havanoposdesk_odoo.group_tenant_admin"
+            action="action_havanoposdesk_settings_my_business"/>
+
         <!-- Stores Submenu -->
         <record id="action_my_stores" model="ir.actions.act_window">
             <field name="name">My Stores</field>
