@@ -8,13 +8,14 @@
         <field name="arch" type="xml">
             <!-- Hide native General Settings tab -->
             <xpath expr="//app[@name='general_settings']" position="attributes">
-                <attribute name="invisible">not is_super_user</attribute>
+                <attribute name="invisible">not is_super_user or is_custom_configs</attribute>
             </xpath>
 
             <xpath expr="//form" position="inside">
                 <field name="is_super_user" invisible="1"/>
+                <field name="is_custom_configs" invisible="1"/>
                 <!-- SaaS Config Settings -->
-                <app logo="/Havanoposdesk_odoo/static/description/icon.png" data-string="SaaS Config" string="SaaS Config" name="havanoposdesk_saas" groups="base.group_system">
+                <app logo="/Havanoposdesk_odoo/static/description/icon.png" data-string="SaaS Config" string="SaaS Config" name="havanoposdesk_saas" groups="base.group_system" invisible="not is_custom_configs">
                     <block title="SaaS Administration" name="saas_config">
                         <div>
                             <p class="text-muted">Global SaaS settings, users, and tenants configuration.</p>
@@ -92,7 +93,7 @@
                 </app>
                 
                 <!-- My Business Settings -->
-                <app logo="/Havanoposdesk_odoo/static/description/icon.png" data-string="My Business" string="My Business" name="havanoposdesk_my_business" groups="base.group_user">
+                <app logo="/Havanoposdesk_odoo/static/description/icon.png" data-string="My Business" string="My Business" name="havanoposdesk_my_business" groups="base.group_user" invisible="not is_custom_configs">
                     <field name="tenant_id" invisible="1"/>
                     <div class="row mt16 o_settings_container">
                         <div class="col-12 col-lg-6 o_setting_box">
@@ -123,7 +124,7 @@
                 </app>
                 
                 <!-- Sales Settings -->
-                <app logo="/sale/static/description/icon.png" data-string="Sales" string="Sales" name="havanoposdesk_sales" groups="base.group_user">
+                <app logo="/sale/static/description/icon.png" data-string="Sales" string="Sales" name="havanoposdesk_sales" groups="base.group_user" invisible="not is_custom_configs">
                     <block title="Sales Configuration" name="sales_config">
                         <div>
                             <p class="text-muted">Point of Sale and Sales settings will go here.</p>
@@ -132,7 +133,7 @@
                 </app>
                 
                 <!-- Stock Settings -->
-                <app logo="/stock/static/description/icon.png" data-string="Stock" string="Stock" name="havanoposdesk_stock" groups="base.group_user">
+                <app logo="/stock/static/description/icon.png" data-string="Stock" string="Stock" name="havanoposdesk_stock" groups="base.group_user" invisible="not is_custom_configs">
                     <block title="Inventory Operations" name="stock_config">
                         <setting id="allow_negative_stock_setting" help="Allow selling products even when their quantity on hand is zero or less. Purchasing more will compensate the negative balance automatically.">
                             <field name="havano_allow_negative_stock" widget="boolean_toggle"/>
@@ -144,7 +145,7 @@
                 </app>
 
                 <!-- Accounts Settings -->
-                <app logo="/account/static/description/icon.png" data-string="Accounts" string="Accounts" name="havanoposdesk_accounts" groups="base.group_user">
+                <app logo="/account/static/description/icon.png" data-string="Accounts" string="Accounts" name="havanoposdesk_accounts" groups="base.group_user" invisible="not is_custom_configs">
                     <block title="Accounting Configuration" name="accounts_config">
                         <div>
                             <p class="text-muted">Chart of accounts, taxes, and accounting settings will go here.</p>
@@ -153,7 +154,7 @@
                 </app>
                 
                 <!-- Suppliers Settings -->
-                <app logo="/purchase/static/description/icon.png" data-string="Suppliers" string="Suppliers" name="havanoposdesk_suppliers" groups="base.group_user">
+                <app logo="/purchase/static/description/icon.png" data-string="Suppliers" string="Suppliers" name="havanoposdesk_suppliers" groups="base.group_user" invisible="not is_custom_configs">
                     <block title="Purchasing Configuration" name="suppliers_config">
                         <div>
                             <p class="text-muted">Supplier and purchasing settings will go here.</p>
@@ -170,34 +171,34 @@
         <field name="name">Settings</field>
         <field name="res_model">res.config.settings</field>
         <field name="view_mode">form</field>
-        <field name="context">{'module': 'havanoposdesk_my_business'}</field>
+        <field name="context">{'module': 'havanoposdesk_my_business', 'is_custom_configs': True}</field>
     </record>
 
     <record id="action_havanoposdesk_settings_sales" model="ir.actions.act_window">
         <field name="name">Settings</field>
         <field name="res_model">res.config.settings</field>
         <field name="view_mode">form</field>
-        <field name="context">{'module': 'havanoposdesk_sales'}</field>
+        <field name="context">{'module': 'havanoposdesk_sales', 'is_custom_configs': True}</field>
     </record>
 
     <record id="action_havanoposdesk_settings_stock" model="ir.actions.act_window">
         <field name="name">Settings</field>
         <field name="res_model">res.config.settings</field>
         <field name="view_mode">form</field>
-        <field name="context">{'module': 'havanoposdesk_stock'}</field>
+        <field name="context">{'module': 'havanoposdesk_stock', 'is_custom_configs': True}</field>
     </record>
 
     <record id="action_havanoposdesk_settings_accounts" model="ir.actions.act_window">
         <field name="name">Settings</field>
         <field name="res_model">res.config.settings</field>
         <field name="view_mode">form</field>
-        <field name="context">{'module': 'havanoposdesk_accounts'}</field>
+        <field name="context">{'module': 'havanoposdesk_accounts', 'is_custom_configs': True}</field>
     </record>
 
     <record id="action_havanoposdesk_settings_suppliers" model="ir.actions.act_window">
         <field name="name">Settings</field>
         <field name="res_model">res.config.settings</field>
         <field name="view_mode">form</field>
-        <field name="context">{'module': 'havanoposdesk_suppliers'}</field>
+        <field name="context">{'module': 'havanoposdesk_suppliers', 'is_custom_configs': True}</field>
     </record>
 </odoo>

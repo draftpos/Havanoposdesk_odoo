@@ -8,11 +8,22 @@ class ResConfigSettings(models.TransientModel):
         compute="_compute_is_super_user"
     )
 
+    is_custom_configs = fields.Boolean(
+        string="Is Custom Configs",
+        compute="_compute_is_custom_configs"
+    )
+
     @api.depends_context('uid')
     def _compute_is_super_user(self):
         is_super = self.env.user.havano_role == 'super_admin' or self.env.user.has_group('base.group_system') or self.env.su
         for record in self:
             record.is_super_user = is_super
+
+    @api.depends_context('is_custom_configs')
+    def _compute_is_custom_configs(self):
+        is_custom = self.env.context.get('is_custom_configs', False)
+        for record in self:
+            record.is_custom_configs = is_custom
 
     @api.model
     def check_access_rights(self, operation, raise_exception=True):

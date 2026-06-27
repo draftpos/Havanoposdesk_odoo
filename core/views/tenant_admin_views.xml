@@ -10,10 +10,10 @@
             immediately after module upgrade with no dependency on base record overrides.
         -->
         <menuitem id="menu_tenant_admin_settings_root"
-            name="Settings"
+            name="Configs"
             web_icon="base,static/description/settings.png"
             sequence="550"
-            groups="havanoposdesk_odoo.group_tenant_admin"
+            groups="havanoposdesk_odoo.group_tenant_admin,base.group_system"
             action="action_havanoposdesk_settings_my_business"/>
 
         <!-- Stores Submenu -->
