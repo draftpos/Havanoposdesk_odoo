@@ -34,6 +34,8 @@
                             <group>
                                 <field name="posting_date" readonly="state != 'draft'" class="border-bottom border-dark"/>
                                 <field name="posting_time" widget="float_time" readonly="state != 'draft'" class="border-bottom border-dark"/>
+                                <field name="payment_status" readonly="state != 'draft'" class="border-bottom border-dark" widget="radio" options="{'horizontal': true}"/>
+                                <field name="account_id" invisible="payment_status != 'cash'" required="payment_status == 'cash'" readonly="state != 'draft'" class="border-bottom border-dark"/>
                             </group>
                         </group>
                         <notebook>
@@ -69,6 +71,7 @@
                 <list  string="Purchases">
                     <field  name="name" optional="show"/>
                     <field  name="invoice_type" optional="show" readonly="1" string="Type"/>
+                    <field  name="payment_status" optional="show"/>
                     <field  name="supplier" optional="show"/>
                     <field  name="store_id" optional="show"/>
                     <field  name="posting_date" optional="show"/>

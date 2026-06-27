@@ -35,6 +35,12 @@ class Purchase(models.Model):
     is_return = fields.Boolean(string='Is Return (Debit Note)', default=False)
     return_id = fields.Many2one('havanoposdesk.purchase', string='Original Purchase', copy=False)
     return_purchase_ids = fields.One2many('havanoposdesk.purchase', 'return_id', string='Returned Purchases')
+    payment_status = fields.Selection([
+        ('cash', 'Cash (Paid)'),
+        ('account', 'On Account')
+    ], string='Payment Status', default='account', required=True)
+    account_id = fields.Many2one('havanoposdesk.account', string='Payment Account', domain="[('type', 'in', ['Cash', 'Bank'])]")
+    pos_payment_id = fields.Many2one('havanoposdesk.payment', string='POS Payment Batch')
     invoice_type = fields.Char(string='Type', compute='_compute_invoice_type', store=True)
 
     @api.depends('is_return')
@@ -54,6 +60,8 @@ class Purchase(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            if vals.get('payment_status') == 'cash' and not vals.get('account_id'):
+                raise ValidationError("Please specify a cash/bank payment account for cash purchases.")
             if vals.get('name', 'New') == 'New':
                 tenant_id = vals.get('tenant_id') or self.env.user.tenant_id.id
                 tenant = self.env['havanoposdesk.tenant'].browse(tenant_id) if tenant_id else self.env['havanoposdesk.tenant']
@@ -77,6 +85,10 @@ class Purchase(models.Model):
         for record in self:
             if record.state != 'draft' and any(f not in ['state'] for f in vals.keys()):
                 raise ValidationError("You cannot modify a confirmed/posted purchase. Please cancel it first.")
+            payment_status = vals.get('payment_status', record.payment_status)
+            account_id = vals.get('account_id', record.account_id)
+            if payment_status == 'cash' and not account_id:
+                raise ValidationError("Please specify a cash/bank payment account for cash purchases.")
         return super().write(vals)
 
     def unlink(self):
@@ -90,6 +102,39 @@ class Purchase(models.Model):
         for purchase in self:
             if purchase.state != 'draft':
                 continue
+                
+            # Auto-create payment if cash
+            if purchase.payment_status == 'cash' and purchase.account_id:
+                payment_type = 'receipt' if purchase.is_return else 'payment'
+                
+                existing_payment = self.env['havanoposdesk.payment'].search([
+                    ('date', '=', fields.Date.context_today(self)),
+                    ('reference', '=', 'POS Purchases'),
+                    ('account_id', '=', purchase.account_id.id),
+                    ('payment_type', '=', payment_type),
+                    ('state', 'in', ['draft', 'posted']),
+                ], limit=1)
+
+                if existing_payment:
+                    existing_payment.amount += purchase.amount_total
+                    if existing_payment.state == 'posted':
+                        if payment_type == 'receipt':
+                            existing_payment.account_id.sudo().balance += purchase.amount_total
+                        else:
+                            existing_payment.account_id.sudo().balance -= purchase.amount_total
+                    purchase.pos_payment_id = existing_payment.id
+                else:
+                    payment = self.env['havanoposdesk.payment'].create({
+                        'payment_type': payment_type,
+                        'partner_type': 'supplier',
+                        'account_id': purchase.account_id.id,
+                        'amount': purchase.amount_total,
+                        'reference': 'POS Purchases',
+                        'date': fields.Date.context_today(self),
+                    })
+                    payment.action_post()
+                    purchase.pos_payment_id = payment.id
+
             for line in purchase.line_ids:
                 if line.accepted_qty > 0:
                     if purchase.is_return:
@@ -161,6 +206,18 @@ class Purchase(models.Model):
         for purchase in self:
             if purchase.state != 'posted':
                 continue
+                
+            # Reverse POS Payment batch amounts and account balances
+            if purchase.payment_status == 'cash' and purchase.pos_payment_id:
+                payment = purchase.pos_payment_id
+                payment_type = 'receipt' if purchase.is_return else 'payment'
+                if payment.state == 'posted':
+                    if payment_type == 'receipt':
+                        payment.account_id.sudo().balance -= purchase.amount_total
+                    else:
+                        payment.account_id.sudo().balance += purchase.amount_total
+                payment.write({'amount': payment.amount - purchase.amount_total})
+
             for line in purchase.line_ids:
                 if line.accepted_qty > 0:
                     if purchase.is_return:
