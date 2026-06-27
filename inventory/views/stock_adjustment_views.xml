@@ -61,6 +61,9 @@
                     <field  name="store_id" optional="show"/>
                     <field  name="posting_date" optional="show"/>
                     <field  name="posting_time" widget="float_time" optional="show"/>
+                    <field  name="total_qty_difference" string="Variance" optional="show"/>
+                    <field  name="total_amount_difference" string="Amount Difference" optional="show"/>
+                    <field  name="create_uid" string="Created By" optional="show"/>
                 </list>
             </field>
         </record>

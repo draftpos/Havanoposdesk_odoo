@@ -46,6 +46,22 @@ class StockAdjustment(models.Model):
         return res
     
     line_ids = fields.One2many('havanoposdesk.stock.adjustment.line', 'adjustment_id', string='Items')
+    total_qty_difference = fields.Float(
+        string='Total Qty Difference',
+        compute='_compute_totals',
+        store=True
+    )
+    total_amount_difference = fields.Float(
+        string='Total Amount Difference',
+        compute='_compute_totals',
+        store=True
+    )
+
+    @api.depends('line_ids.qty_difference', 'line_ids.amount_difference')
+    def _compute_totals(self):
+        for record in self:
+            record.total_qty_difference = sum(record.line_ids.mapped('qty_difference'))
+            record.total_amount_difference = sum(record.line_ids.mapped('amount_difference'))
 
     @api.onchange('fetch_all_data')
     def _onchange_fetch_all_data(self):
