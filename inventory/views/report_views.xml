@@ -12,9 +12,9 @@
                     <field  name="item_code" optional="show"/>
                     <field  name="category_id" optional="show"/>
                     <field  name="store" optional="show"/>
-                    <field  name="on_hand_qty" optional="show"/>
-                    <field  name="value_cost" optional="show"/>
-                    <field  name="value_selling" optional="show"/>
+                    <field  name="on_hand_qty" sum="Total Qty" optional="show"/>
+                    <field  name="value_cost" sum="Total Cost Value" optional="show"/>
+                    <field  name="value_selling" sum="Total Selling Value" optional="show"/>
                 </list>
             </field>
         </record>
