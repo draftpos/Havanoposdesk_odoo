@@ -21,6 +21,12 @@ class Sale(models.Model):
     is_return = fields.Boolean(string='Is Credit Note', default=False)
     return_id = fields.Many2one('havanoposdesk.sale', string='Original Sale')
     return_sale_ids = fields.One2many('havanoposdesk.sale', 'return_id', string='Credit Notes')
+    invoice_type = fields.Char(string='Type', compute='_compute_invoice_type', store=True)
+
+    @api.depends('is_return')
+    def _compute_invoice_type(self):
+        for record in self:
+            record.invoice_type = 'Credit Note' if record.is_return else 'Sales Invoice'
     
     payment_status = fields.Selection([
         ('cash', 'Cash (Paid)'),

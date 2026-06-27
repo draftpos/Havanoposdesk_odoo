@@ -25,6 +25,7 @@
                         </div>
                         <group>
                             <group>
+                                <field name="invoice_type" readonly="1" class="border-bottom border-dark"/>
                                 <field name="supplier" readonly="state != 'draft'" class="border-bottom border-dark"/>
                                 <field name="store_id" options="{'no_create': True}" readonly="state != 'draft'" class="border-bottom border-dark"/>
                                 <field name="is_return" invisible="1"/>
@@ -67,7 +68,7 @@
             <field name="arch" type="xml">
                 <list  string="Purchases">
                     <field  name="name" optional="show"/>
-                    <field  name="is_return" optional="show" readonly="1" string="Debit Note"/>
+                    <field  name="invoice_type" optional="show" readonly="1" string="Type"/>
                     <field  name="supplier" optional="show"/>
                     <field  name="store_id" optional="show"/>
                     <field  name="posting_date" optional="show"/>

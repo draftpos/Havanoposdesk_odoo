@@ -35,7 +35,13 @@ class Purchase(models.Model):
     is_return = fields.Boolean(string='Is Return (Debit Note)', default=False)
     return_id = fields.Many2one('havanoposdesk.purchase', string='Original Purchase', copy=False)
     return_purchase_ids = fields.One2many('havanoposdesk.purchase', 'return_id', string='Returned Purchases')
-    
+    invoice_type = fields.Char(string='Type', compute='_compute_invoice_type', store=True)
+
+    @api.depends('is_return')
+    def _compute_invoice_type(self):
+        for record in self:
+            record.invoice_type = 'Debit Note' if record.is_return else 'Purchase Invoice'
+            
     line_ids = fields.One2many('havanoposdesk.purchase.line', 'purchase_id', string='Items')
 
     @api.depends('line_ids.price_subtotal', 'line_ids.price_tax', 'line_ids.amount')

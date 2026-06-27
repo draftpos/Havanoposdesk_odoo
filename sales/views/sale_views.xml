@@ -8,7 +8,7 @@
             <field name="arch" type="xml">
                 <list string="Sales Invoices" default_order="date desc">
                     <field name="name"/>
-                    <field name="is_return" optional="show" readonly="1"/>
+                    <field name="invoice_type" string="Type" optional="show" readonly="1"/>
                     <field name="payment_status" optional="show"/>
                     <field name="customer"/>
                     <field name="date"/>
@@ -17,7 +17,7 @@
                     <field name="amount_untaxed" string="Total Exclu" sum="Total Exclu"/>
                     <field name="amount_tax" string="Total Tax" sum="Total Tax"/>
                     <field name="amount_total" string="Total Inclu" sum="Total Inclu"/>
-                    <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'confirmed'" decoration-success="state == 'done'"/>
+                    <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'done'" decoration-danger="state == 'cancelled'"/>
                 </list>
             </field>
         </record>
@@ -46,6 +46,7 @@
                         </div>
                         <group>
                             <group>
+                                <field name="invoice_type" readonly="1" class="border-bottom border-dark"/>
                                 <field name="customer" readonly="state != 'draft'" class="border-bottom border-dark"/>
                                 <field name="store_id" domain="[('tenant_id', '=', tenant_id)]" options="{'no_create': True}" readonly="state != 'draft'" class="border-bottom border-dark"/>
                                 <field name="date" readonly="state != 'draft'" class="border-bottom border-dark"/>
