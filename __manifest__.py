@@ -16,6 +16,7 @@
         'security/access_rights.xml',
         'core/views/hide_menus.xml',
         'core/data/cron.xml',
+        'core/data/whitelabel_data.xml',
         'inventory/data/sequence.xml',
         'core/views/store_views.xml',
         'core/views/res_users_views.xml',
@@ -26,6 +27,7 @@
         'core/views/tenant_views.xml',
         'core/views/res_config_settings_views.xml',
         'core/views/tenant_admin_views.xml',
+        'core/views/whitelabel_templates.xml',
 
         'accounts/views/account_views.xml',
         'accounts/views/expense_views.xml',
@@ -55,6 +57,7 @@
     'assets': {
         'web.assets_backend': [
             'Havanoposdesk_odoo/static/src/js/user_menu_hide.js',
+            'Havanoposdesk_odoo/static/src/js/whitelabel.js',
         ],
     },
 }

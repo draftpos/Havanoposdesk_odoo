@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Havano White-label: Override Odoo templates with Havano branding.
+    -->
+
+    <!-- 1. Override web.layout to change the page title from "Odoo" to "Havano" -->
+    <template id="havano_layout_title" inherit_id="web.layout" name="Havano Layout Title">
+        <xpath expr="//title" position="replace">
+            <title t-esc="title or 'Havano'"/>
+        </xpath>
+    </template>
+
+    <!-- 2. Override web.layout to change the favicon -->
+    <template id="havano_layout_favicon" inherit_id="web.layout" name="Havano Layout Favicon">
+        <xpath expr="//link[@rel='shortcut icon']" position="replace">
+            <link type="image/x-icon" rel="shortcut icon"
+                  t-att-href="x_icon or '/Havanoposdesk_odoo/static/src/img/havano_logo.svg'"/>
+        </xpath>
+    </template>
+
+    <!-- 3. Override web.login_layout to remove "Powered by Odoo" footer link -->
+    <template id="havano_login_footer" inherit_id="web.login_layout" name="Havano Login Footer">
+        <!-- Replace "Powered by Odoo" with "Powered by Havano" -->
+        <xpath expr="//a[contains(@href,'odoo.com')]" position="replace">
+            <a href="https://havano.cloud" target="_blank">Powered by <span>Havano</span></a>
+        </xpath>
+    </template>
+
+</odoo>

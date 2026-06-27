@@ -70,3 +70,41 @@ class ResConfigSettings(models.TransientModel):
         default='hours',
         help="Unit of time for the grace period (Hours or Days)."
     )
+
+    # ── White-label settings ──────────────────────────────────────────
+    havano_app_name = fields.Char(
+        string="App Name",
+        config_parameter="web.web_app_name",
+        default="Havano",
+        help="The name shown as the PWA app name and browser title."
+    )
+    havano_web_base_url = fields.Char(
+        string="Web Base URL Path",
+        config_parameter="havanoposdesk.web_base_url",
+        default="havano",
+        help="Custom URL path prefix (e.g. 'havano' makes the app accessible at /havano)."
+    )
+    havano_theme_color = fields.Char(
+        string="Theme Color",
+        config_parameter="havanoposdesk.theme_color",
+        default="#714B67",
+        help="PWA theme color (hex)."
+    )
+    havano_bot_name = fields.Char(
+        string="Bot Name",
+        config_parameter="havanoposdesk.bot_name",
+        default="HavanoBot",
+        help="The name of the chatbot visible in the Discuss sidebar."
+    )
+    havano_vendor_url = fields.Char(
+        string="Vendor URL",
+        config_parameter="havanoposdesk.vendor_url",
+        default="https://havano.cloud",
+        help="Vendor website URL shown in the login page footer."
+    )
+    havano_vendor_domain = fields.Char(
+        string="Vendor Domain",
+        config_parameter="havanoposdesk.vendor_domain",
+        default="havano.cloud",
+        help="Vendor domain shown in the login page footer."
+    )
