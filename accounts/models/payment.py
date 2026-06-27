@@ -58,6 +58,20 @@ class Payment(models.Model):
                         vals['name'] = self.env['ir.sequence'].next_by_code('havanoposdesk.payment.in') or 'REC/New'
         return super().create(vals_list)
 
+    def write(self, vals):
+        from odoo.exceptions import ValidationError
+        for record in self:
+            if record.state != 'draft' and any(f not in ['state'] for f in vals.keys()):
+                raise ValidationError("You cannot modify a confirmed/posted payment. Please cancel it first.")
+        return super().write(vals)
+
+    def unlink(self):
+        from odoo.exceptions import ValidationError
+        for record in self:
+            if record.state != 'draft':
+                raise ValidationError("You cannot delete a confirmed/posted payment. Please cancel it first.")
+        return super().unlink()
+
     def action_post(self):
         for payment in self:
             if payment.state != 'draft':
@@ -65,11 +79,11 @@ class Payment(models.Model):
             if payment.amount <= 0:
                 raise UserError("Payment amount must be greater than zero.")
                 
-            # Update Account Balance
+            # Update Account Balance using sudo()
             if payment.payment_type == 'receipt':
-                payment.account_id.balance += payment.amount
+                payment.account_id.sudo().balance += payment.amount
             else:
-                payment.account_id.balance -= payment.amount
+                payment.account_id.sudo().balance -= payment.amount
                 
             payment.write({'state': 'posted'})
 
@@ -79,11 +93,11 @@ class Payment(models.Model):
                 payment.write({'state': 'cancelled'})
                 continue
                 
-            # Reverse Account Balance
+            # Reverse Account Balance using sudo()
             if payment.payment_type == 'receipt':
-                payment.account_id.balance -= payment.amount
+                payment.account_id.sudo().balance -= payment.amount
             else:
-                payment.account_id.balance += payment.amount
+                payment.account_id.sudo().balance += payment.amount
                 
             payment.write({'state': 'cancelled'})
 

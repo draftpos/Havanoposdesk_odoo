@@ -7,25 +7,31 @@
             <field name="model">havanoposdesk.purchase</field>
             <field name="arch" type="xml">
                 <form string="Purchase">
+                    <header>
+                        <button name="action_post" string="Confirm" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                        <button name="action_cancel" string="Cancel" type="object" invisible="state != 'posted'"/>
+                        <button name="action_draft" string="Reset to Draft" type="object" invisible="state != 'cancelled'"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,posted"/>
+                    </header>
                     <sheet>
-                        <div class="oe_title" invisible="1">
+                        <div class="oe_title">
                             <h1>
                                 <field name="name"/>
                             </h1>
                         </div>
                         <group>
                             <group>
-                                <field name="supplier" class="border-bottom border-dark"/>
-                                <field name="store_id" options="{'no_create': True}" class="border-bottom border-dark"/>
+                                <field name="supplier" readonly="state != 'draft'" class="border-bottom border-dark"/>
+                                <field name="store_id" options="{'no_create': True}" readonly="state != 'draft'" class="border-bottom border-dark"/>
                             </group>
                             <group>
-                                <field name="posting_date" class="border-bottom border-dark"/>
-                                <field name="posting_time" widget="float_time" class="border-bottom border-dark"/>
+                                <field name="posting_date" readonly="state != 'draft'" class="border-bottom border-dark"/>
+                                <field name="posting_time" widget="float_time" readonly="state != 'draft'" class="border-bottom border-dark"/>
                             </group>
                         </group>
                         <notebook>
                             <page string="Items">
-                                <field name="line_ids">
+                                <field name="line_ids" readonly="state != 'draft'">
                                     <list  editable="bottom">
                                         <field name="product_id" domain="[('store_id', '=', parent.store_id)]" width="25%" optional="show"/>
                                         <field name="item_code" width="10%" optional="show"/>
@@ -62,6 +68,7 @@
                     <field name="amount_untaxed" string="Total Exclu" sum="Total Exclu"/>
                     <field name="amount_tax" string="Total Tax" sum="Total Tax"/>
                     <field name="amount_total" string="Total Inclu" sum="Total Inclu"/>
+                    <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'posted'" decoration-danger="state == 'cancelled'" optional="show"/>
                 </list>
             </field>
         </record>

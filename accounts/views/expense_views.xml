@@ -6,14 +6,14 @@
             <field name="name">havanoposdesk.expense.list</field>
             <field name="model">havanoposdesk.expense</field>
             <field name="arch" type="xml">
-                <list string="Expense Posting" decoration-info="state == 'Draft'" decoration-success="state == 'Posted'">
+                <list string="Expense Posting" decoration-info="state == 'Draft'" decoration-success="state == 'Posted'" decoration-danger="state == 'Cancelled'">
                     <field name="name"/>
                     <field name="date"/>
                     <field name="supplier_id"/>
                     <field name="account_id"/>
                     <field name="amount" sum="Total Expenses"/>
                     <field name="is_paid" widget="boolean_toggle"/>
-                    <field name="state" widget="badge" decoration-info="state == 'Draft'" decoration-success="state == 'Posted'"/>
+                    <field name="state" widget="badge" decoration-info="state == 'Draft'" decoration-success="state == 'Posted'" decoration-danger="state == 'Cancelled'"/>
                 </list>
             </field>
         </record>
@@ -26,6 +26,8 @@
                 <form string="Expense Posting">
                     <header>
                         <button name="action_post" string="Post" type="object" class="oe_highlight" invisible="state != 'Draft'"/>
+                        <button name="action_cancel" string="Cancel" type="object" invisible="state != 'Posted'"/>
+                        <button name="action_draft" string="Reset to Draft" type="object" invisible="state != 'Cancelled'"/>
                         <field name="state" widget="statusbar" statusbar_visible="Draft,Posted"/>
                     </header>
                     <sheet>

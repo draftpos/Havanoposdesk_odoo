@@ -26,7 +26,7 @@
                 <form string="Payment">
                     <header>
                         <button name="action_post" string="Confirm" type="object" class="oe_highlight" invisible="state != 'draft'"/>
-                        <button name="action_cancel" string="Cancel" type="object" invisible="state == 'cancelled'"/>
+                        <button name="action_cancel" string="Cancel" type="object" invisible="state != 'posted'"/>
                         <button name="action_draft" string="Reset to Draft" type="object" invisible="state != 'cancelled'"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,posted"/>
                     </header>

@@ -22,15 +22,18 @@
             </field>
         </record>
 
-        <!-- Sales Form View -->
+         <!-- Sales Form View -->
         <record id="view_havanoposdesk_sale_form" model="ir.ui.view">
             <field name="name">havanoposdesk.sale.form</field>
             <field name="model">havanoposdesk.sale</field>
             <field name="arch" type="xml">
                 <form string="Sales Invoice">
                     <header>
+                        <button name="action_post" string="Confirm" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                        <button name="action_cancel" string="Cancel" type="object" invisible="state not in ['confirmed', 'done']"/>
+                        <button name="action_draft" string="Reset to Draft" type="object" invisible="state != 'cancelled'"/>
                         <button name="%(action_havanoposdesk_sale_return_wizard)d" string="Credit Note" type="action" class="btn-primary" invisible="state != 'done' or is_return"/>
-                        <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
                     </header>
                     <sheet>
                         <div class="oe_title">
@@ -43,22 +46,22 @@
                         </div>
                         <group>
                             <group>
-                                <field name="customer" class="border-bottom border-dark"/>
-                                <field name="store_id" domain="[('tenant_id', '=', tenant_id)]" options="{'no_create': True}" class="border-bottom border-dark"/>
-                                <field name="date" class="border-bottom border-dark"/>
+                                <field name="customer" readonly="state != 'draft'" class="border-bottom border-dark"/>
+                                <field name="store_id" domain="[('tenant_id', '=', tenant_id)]" options="{'no_create': True}" readonly="state != 'draft'" class="border-bottom border-dark"/>
+                                <field name="date" readonly="state != 'draft'" class="border-bottom border-dark"/>
                                 <field name="is_return" invisible="1"/>
                                 <field name="return_id" invisible="not is_return" readonly="1" class="border-bottom border-dark"/>
                             </group>
                             <group>
-                                <field name="salesperson_id" options="{'no_create': True}" class="border-bottom border-dark"/>
-                                <field name="payment_status" class="border-bottom border-dark" widget="radio" options="{'horizontal': true}"/>
-                                <field name="account_id" invisible="payment_status != 'cash'" required="payment_status == 'cash'" class="border-bottom border-dark"/>
+                                <field name="salesperson_id" options="{'no_create': True}" readonly="state != 'draft'" class="border-bottom border-dark"/>
+                                <field name="payment_status" readonly="state != 'draft'" class="border-bottom border-dark" widget="radio" options="{'horizontal': true}"/>
+                                <field name="account_id" invisible="payment_status != 'cash'" required="payment_status == 'cash'" readonly="state != 'draft'" class="border-bottom border-dark"/>
                                 <field name="tenant_id" invisible="1"/>
                             </group>
                         </group>
                         <notebook>
                             <page string="Order Lines">
-                                <field name="line_ids">
+                                <field name="line_ids" readonly="state != 'draft'">
                                     <list editable="bottom">
                                         <field name="product_id" domain="[('store_id', '=', parent.store_id)]" width="25%" optional="show"/>
                                         <field name="item_code" width="10%" optional="show"/>

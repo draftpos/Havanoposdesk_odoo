@@ -18,7 +18,8 @@ class Expense(models.Model):
     )
     state = fields.Selection([
         ('Draft', 'Draft'),
-        ('Posted', 'Posted')
+        ('Posted', 'Posted'),
+        ('Cancelled', 'Cancelled')
     ], string='Status', readonly=True, default='Draft')
     
     # Store reference
@@ -42,6 +43,20 @@ class Expense(models.Model):
                     vals['name'] = self.env['ir.sequence'].next_by_code('havanoposdesk.expense') or 'New'
         return super().create(vals_list)
 
+    def write(self, vals):
+        from odoo.exceptions import ValidationError
+        for record in self:
+            if record.state != 'Draft' and any(f not in ['state'] for f in vals.keys()):
+                raise ValidationError("You cannot modify a confirmed/posted expense. Please cancel it first.")
+        return super().write(vals)
+
+    def unlink(self):
+        from odoo.exceptions import ValidationError
+        for record in self:
+            if record.state != 'Draft':
+                raise ValidationError("You cannot delete a confirmed/posted expense. Please cancel it first.")
+        return super().unlink()
+
     def action_post(self):
         for record in self:
             if record.state == 'Draft':
@@ -49,11 +64,31 @@ class Expense(models.Model):
                     if not record.payment_account_id:
                         from odoo.exceptions import ValidationError
                         raise ValidationError("Please select a Payment Account for paid expenses.")
-                    # Subtract from payment account (cash/bank)
-                    record.payment_account_id.balance -= record.amount
-                    # Add to expense account
-                    record.account_id.balance += record.amount
+                    # Subtract from payment account (cash/bank) using sudo()
+                    record.payment_account_id.sudo().balance -= record.amount
+                    # Add to expense account using sudo()
+                    record.account_id.sudo().balance += record.amount
                 else:
-                    # Just add to expense account if not paid
-                    record.account_id.balance += record.amount
+                    # Just add to expense account if not paid using sudo()
+                    record.account_id.sudo().balance += record.amount
                 record.state = 'Posted'
+
+    def action_cancel(self):
+        for record in self:
+            if record.state != 'Posted':
+                continue
+            if record.is_paid and record.payment_account_id:
+                # Reverse subtraction using sudo()
+                record.payment_account_id.sudo().balance += record.amount
+                # Reverse addition using sudo()
+                record.account_id.sudo().balance -= record.amount
+            else:
+                # Reverse addition using sudo()
+                record.account_id.sudo().balance -= record.amount
+            record.state = 'Cancelled'
+
+    def action_draft(self):
+        for record in self:
+            if record.state != 'Cancelled':
+                continue
+            record.state = 'Draft'

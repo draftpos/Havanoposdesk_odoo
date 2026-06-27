@@ -113,6 +113,53 @@ class Sale(models.Model):
         sales = super().create(vals_list)
         
         for sale in sales:
+            if sale.state in ['confirmed', 'done']:
+                # Set to draft temporarily to let action_post execute
+                sale.state = 'draft'
+                sale.action_post()
+        return sales
+
+    def write(self, vals):
+        from odoo.exceptions import ValidationError
+        for record in self:
+            if record.state != 'draft' and any(f not in ['state'] for f in vals.keys()):
+                raise ValidationError("You cannot modify a confirmed sale. Please cancel it first.")
+
+        # Sync values on write
+        if 'store' in vals and 'store_id' not in vals:
+            store = self.env['havanoposdesk.store'].search([('name', '=', vals['store'])], limit=1)
+            if store:
+                vals['store_id'] = store.id
+        elif 'store_id' in vals and 'store' not in vals:
+            store = self.env['havanoposdesk.store'].browse(vals['store_id'])
+            if store:
+                vals['store'] = store.name
+
+        if 'date' in vals and 'posting_date' not in vals:
+            dt = fields.Datetime.to_datetime(vals['date'])
+            vals['posting_date'] = dt.date()
+            vals['posting_time'] = dt.hour + dt.minute / 60.0
+        elif 'posting_date' in vals and 'date' not in vals:
+            p_date = fields.Date.to_date(vals['posting_date'])
+            p_time = vals.get('posting_time') or (self.posting_time if hasattr(self, 'posting_time') else 0.0)
+            hours = int(p_time)
+            minutes = int((p_time - hours) * 60)
+            vals['date'] = datetime.combine(p_date, time(hours, minutes))
+
+        return super().write(vals)
+
+    def unlink(self):
+        from odoo.exceptions import ValidationError
+        for record in self:
+            if record.state != 'draft':
+                raise ValidationError("You cannot delete a confirmed sale. Please cancel it first.")
+        return super().unlink()
+
+    def action_post(self):
+        for sale in self:
+            if sale.state != 'draft':
+                continue
+            
             # Auto-create payment if cash
             if sale.payment_status == 'cash' and sale.account_id:
                 payment_type = 'payment' if sale.is_return else 'receipt'
@@ -129,9 +176,9 @@ class Sale(models.Model):
                     existing_payment.amount += sale.amount_total
                     if existing_payment.state == 'posted':
                         if payment_type == 'receipt':
-                            existing_payment.account_id.balance += sale.amount_total
+                            existing_payment.account_id.sudo().balance += sale.amount_total
                         else:
-                            existing_payment.account_id.balance -= sale.amount_total
+                            existing_payment.account_id.sudo().balance -= sale.amount_total
                     sale.pos_payment_id = existing_payment.id
                 else:
                     payment = self.env['havanoposdesk.payment'].create({
@@ -149,7 +196,7 @@ class Sale(models.Model):
                 if line.accepted_qty > 0:
                     if sale.is_return:
                         # Add back to stock
-                        line.product_id.opening_stock += line.accepted_qty
+                        line.product_id.sudo().opening_stock += line.accepted_qty
                         self.env['havanoposdesk.stock.ledger'].sudo().create({
                             'product_id': line.product_id.id,
                             'in_qty': line.accepted_qty,
@@ -161,7 +208,7 @@ class Sale(models.Model):
                         })
                     else:
                         # Update Product On Hand (opening_stock)
-                        line.product_id.opening_stock -= line.accepted_qty
+                        line.product_id.sudo().opening_stock -= line.accepted_qty
                         
                         # Create Ledger Entry using sudo()
                         self.env['havanoposdesk.stock.ledger'].sudo().create({
@@ -193,7 +240,7 @@ class Sale(models.Model):
                         })
                 elif line.accepted_qty < 0:
                     # Return sale: add back to stock
-                    line.product_id.opening_stock += abs(line.accepted_qty)
+                    line.product_id.sudo().opening_stock += abs(line.accepted_qty)
                     
                     # Create Ledger Entry using sudo()
                     self.env['havanoposdesk.stock.ledger'].sudo().create({
@@ -230,31 +277,71 @@ class Sale(models.Model):
                                 'store': sale.store,
                                 'on_hand_qty': -line.accepted_qty,
                             })
-        return sales
+            sale.write({'state': 'done'})
 
-    def write(self, vals):
-        # Sync values on write
-        if 'store' in vals and 'store_id' not in vals:
-            store = self.env['havanoposdesk.store'].search([('name', '=', vals['store'])], limit=1)
-            if store:
-                vals['store_id'] = store.id
-        elif 'store_id' in vals and 'store' not in vals:
-            store = self.env['havanoposdesk.store'].browse(vals['store_id'])
-            if store:
-                vals['store'] = store.name
+    def action_cancel(self):
+        for sale in self:
+            if sale.state not in ['confirmed', 'done']:
+                continue
+            
+            for line in sale.line_ids:
+                if line.accepted_qty > 0:
+                    if sale.is_return:
+                        # Revert: Subtract stock
+                        line.product_id.sudo().opening_stock -= line.accepted_qty
+                    else:
+                        # Revert: Add back to stock
+                        line.product_id.sudo().opening_stock += line.accepted_qty
+                elif line.accepted_qty < 0:
+                    # Revert: Subtract stock
+                    line.product_id.sudo().opening_stock -= abs(line.accepted_qty)
 
-        if 'date' in vals and 'posting_date' not in vals:
-            dt = fields.Datetime.to_datetime(vals['date'])
-            vals['posting_date'] = dt.date()
-            vals['posting_time'] = dt.hour + dt.minute / 60.0
-        elif 'posting_date' in vals and 'date' not in vals:
-            p_date = fields.Date.to_date(vals['posting_date'])
-            p_time = vals.get('posting_time') or (self.posting_time if hasattr(self, 'posting_time') else 0.0)
-            hours = int(p_time)
-            minutes = int((p_time - hours) * 60)
-            vals['date'] = datetime.combine(p_date, time(hours, minutes))
+                # Create reverse ledger entry using sudo()
+                orig_ledgers = self.env['havanoposdesk.stock.ledger'].sudo().search([
+                    ('doc_no', '=', sale.name),
+                    ('product_id', '=', line.product_id.id),
+                    ('type', 'in', ['Sale', 'Return', 'Credit Note'])
+                ])
+                for orig_ledger in orig_ledgers:
+                    self.env['havanoposdesk.stock.ledger'].sudo().create({
+                        'product_id': line.product_id.id,
+                        'in_qty': orig_ledger.out_qty,
+                        'out_qty': orig_ledger.in_qty,
+                        'balance_qty': line.product_id.opening_stock,
+                        'store': sale.store,
+                        'type': 'Sale Cancelled',
+                        'doc_no': sale.name,
+                    })
 
-        return super().write(vals)
+                # Update Valuation Entry using sudo()
+                valuation = self.env['havanoposdesk.stock.valuation'].sudo().search([
+                    ('product_id', '=', line.product_id.id),
+                    ('store', '=', sale.store)
+                ], limit=1)
+                if valuation:
+                    if sale.is_return:
+                        valuation.write({'on_hand_qty': valuation.on_hand_qty - line.accepted_qty})
+                    else:
+                        valuation.write({'on_hand_qty': valuation.on_hand_qty + line.accepted_qty})
+
+            # Reverse POS Payment batch amounts and account balances
+            if sale.payment_status == 'cash' and sale.pos_payment_id:
+                payment = sale.pos_payment_id
+                payment_type = 'payment' if sale.is_return else 'receipt'
+                if payment.state == 'posted':
+                    if payment_type == 'receipt':
+                        payment.account_id.sudo().balance -= sale.amount_total
+                    else:
+                        payment.account_id.sudo().balance += sale.amount_total
+                payment.write({'amount': payment.amount - sale.amount_total})
+                
+            sale.write({'state': 'cancelled'})
+
+    def action_draft(self):
+        for sale in self:
+            if sale.state != 'cancelled':
+                continue
+            sale.write({'state': 'draft'})
 
 class SaleLine(models.Model):
     _name = 'havanoposdesk.sale.line'

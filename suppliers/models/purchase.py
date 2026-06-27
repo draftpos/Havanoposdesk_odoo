@@ -27,6 +27,11 @@ class Purchase(models.Model):
     amount_untaxed = fields.Float(string='Untaxed Amount', compute='_compute_amount_total', store=True)
     amount_tax = fields.Float(string='Taxes', compute='_compute_amount_total', store=True)
     amount_total = fields.Float(string='Total Amount', compute='_compute_amount_total', store=True)
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('posted', 'Posted'),
+        ('cancelled', 'Cancelled')
+    ], string='Status', required=True, default='draft')
     
     line_ids = fields.One2many('havanoposdesk.purchase.line', 'purchase_id', string='Items')
 
@@ -51,10 +56,33 @@ class Purchase(models.Model):
         purchases = super().create(vals_list)
         
         for purchase in purchases:
+            if purchase.state == 'posted':
+                purchase.state = 'draft'
+                purchase.action_post()
+        return purchases
+
+    def write(self, vals):
+        from odoo.exceptions import ValidationError
+        for record in self:
+            if record.state != 'draft' and any(f not in ['state'] for f in vals.keys()):
+                raise ValidationError("You cannot modify a confirmed/posted purchase. Please cancel it first.")
+        return super().write(vals)
+
+    def unlink(self):
+        from odoo.exceptions import ValidationError
+        for record in self:
+            if record.state != 'draft':
+                raise ValidationError("You cannot delete a confirmed/posted purchase. Please cancel it first.")
+        return super().unlink()
+
+    def action_post(self):
+        for purchase in self:
+            if purchase.state != 'draft':
+                continue
             for line in purchase.line_ids:
                 if line.accepted_qty > 0:
-                    # Update Product On Hand (opening_stock)
-                    line.product_id.opening_stock += line.accepted_qty
+                    # Update Product On Hand (opening_stock) using sudo()
+                    line.product_id.sudo().opening_stock += line.accepted_qty
                     
                     # Create Ledger Entry using sudo()
                     self.env['havanoposdesk.stock.ledger'].sudo().create({
@@ -83,7 +111,44 @@ class Purchase(models.Model):
                             'store': purchase.store_id.name if purchase.store_id else '',
                             'on_hand_qty': line.accepted_qty,
                         })
-        return purchases
+            purchase.write({'state': 'posted'})
+
+    def action_cancel(self):
+        for purchase in self:
+            if purchase.state != 'posted':
+                continue
+            for line in purchase.line_ids:
+                if line.accepted_qty > 0:
+                    # Revert: Subtract stock using sudo()
+                    line.product_id.sudo().opening_stock -= line.accepted_qty
+                    
+                    # Create reverse ledger entry using sudo()
+                    self.env['havanoposdesk.stock.ledger'].sudo().create({
+                        'product_id': line.product_id.id,
+                        'in_qty': 0.0,
+                        'out_qty': line.accepted_qty,
+                        'balance_qty': line.product_id.opening_stock,
+                        'store': purchase.store_id.name if purchase.store_id else '',
+                        'type': 'Purchase Cancelled',
+                        'doc_no': purchase.name,
+                    })
+
+                    # Update Valuation Entry using sudo()
+                    valuation = self.env['havanoposdesk.stock.valuation'].sudo().search([
+                        ('product_id', '=', line.product_id.id),
+                        ('store', '=', purchase.store_id.name if purchase.store_id else '')
+                    ], limit=1)
+                    if valuation:
+                        valuation.write({
+                            'on_hand_qty': valuation.on_hand_qty - line.accepted_qty,
+                        })
+            purchase.write({'state': 'cancelled'})
+
+    def action_draft(self):
+        for purchase in self:
+            if purchase.state != 'cancelled':
+                continue
+            purchase.write({'state': 'draft'})
 
 class PurchaseLine(models.Model):
     _name = 'havanoposdesk.purchase.line'
