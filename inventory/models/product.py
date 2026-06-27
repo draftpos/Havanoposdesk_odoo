@@ -113,7 +113,7 @@ class HavanoposdeskProduct(models.Model):
                     'fetch_all_data': False,
                     'line_ids': [(0, 0, {
                         'product_id': product.id,
-                        'on_hand': 0.0,
+                        'on_hand': product.opening_stock,
                         'counted': product.opening_stock,
                     })]
                 })

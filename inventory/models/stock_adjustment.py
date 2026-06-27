@@ -125,12 +125,12 @@ class StockAdjustment(models.Model):
                     vals['name'] = self.env['ir.sequence'].next_by_code('havanoposdesk.stock.adjustment') or 'New'
 
             # Populate on_hand from product opening_stock for manual adjustments
-            if not self.env.context.get('from_product_creation') and 'line_ids' in vals:
+            if 'line_ids' in vals:
                 for line_cmd in vals['line_ids']:
                     if line_cmd[0] == 0:  # Create command (0, 0, {values})
                         line_vals = line_cmd[2]
                         product_id = line_vals.get('product_id')
-                        if product_id:
+                        if product_id and not line_vals.get('on_hand'):
                             product = self.env['havanoposdesk.product'].browse(product_id)
                             if product:
                                 line_vals['on_hand'] = product.opening_stock
@@ -139,18 +139,23 @@ class StockAdjustment(models.Model):
         
         for adjustment in adjustments:
             for line in adjustment.line_ids:
-                if line.qty_difference != 0:
+                is_creation = self.env.context.get('from_product_creation')
+                if line.qty_difference != 0 or is_creation:
                     # Update Product On Hand (opening_stock)
-                    line.product_id.opening_stock = line.counted
+                    if not is_creation:
+                        line.product_id.opening_stock = line.counted
                     
                     # Create Ledger Entry using sudo() to bypass access rights
+                    in_qty = line.counted if is_creation else (line.qty_difference if line.qty_difference > 0 else 0.0)
+                    out_qty = 0.0 if is_creation else (abs(line.qty_difference) if line.qty_difference < 0 else 0.0)
+                    
                     self.env['havanoposdesk.stock.ledger'].sudo().create({
                         'product_id': line.product_id.id,
-                        'in_qty': line.qty_difference if line.qty_difference > 0 else 0.0,
-                        'out_qty': abs(line.qty_difference) if line.qty_difference < 0 else 0.0,
+                        'in_qty': in_qty,
+                        'out_qty': out_qty,
                         'balance_qty': line.counted,
                         'store': adjustment.store_id.name if adjustment.store_id else '',
-                        'type': 'Stock Adjustment',
+                        'type': 'Opening Stock' if is_creation else 'Stock Adjustment',
                         'doc_no': adjustment.name,
                     })
 
