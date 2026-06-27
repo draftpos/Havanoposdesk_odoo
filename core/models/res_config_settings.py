@@ -8,40 +8,11 @@ class ResConfigSettings(models.TransientModel):
         compute="_compute_is_super_user"
     )
 
-    is_custom_configs = fields.Boolean(
-        string="Is Custom Configs",
-        compute="_compute_is_custom_configs"
-    )
-
     @api.depends_context('uid')
     def _compute_is_super_user(self):
         is_super = self.env.user.havano_role == 'super_admin' or self.env.user.has_group('base.group_system') or self.env.su
         for record in self:
             record.is_super_user = is_super
-
-    @api.depends_context('is_custom_configs', 'uid')
-    def _compute_is_custom_configs(self):
-        is_custom = self.env.context.get('is_custom_configs', False)
-        if not is_custom:
-            params = self.env.context.get('params', {})
-            menu_id = params.get('menu_id')
-            if menu_id:
-                menu = self.env['ir.ui.menu'].sudo().browse(menu_id)
-                if menu.exists():
-                    native_menu_ids = []
-                    admin_menu = self.env.ref('base.menu_administration', raise_if_not_found=False)
-                    if admin_menu:
-                        native_menu_ids.append(admin_menu.id)
-                    config_menu = self.env.ref('base.menu_config', raise_if_not_found=False)
-                    if config_menu:
-                        native_menu_ids.append(config_menu.id)
-                    
-                    if menu.id in native_menu_ids or (menu.parent_id and menu.parent_id.id in native_menu_ids):
-                        is_custom = False
-                    else:
-                        is_custom = True
-        for record in self:
-            record.is_custom_configs = is_custom
 
     @api.model
     def check_access_rights(self, operation, raise_exception=True):
