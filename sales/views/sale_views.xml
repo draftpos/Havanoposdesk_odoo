@@ -49,16 +49,16 @@
                         </div>
                         <group>
                             <group>
-                                <field name="invoice_type" readonly="1" class="border-bottom border-dark"/>
+                                <field name="invoice_type" invisible="1"/>
                                 <field name="customer" readonly="state != 'draft'" class="border-bottom border-dark"/>
                                 <field name="store_id" domain="[('tenant_id', '=', tenant_id)]" options="{'no_create': True}" readonly="state != 'draft'" class="border-bottom border-dark"/>
-                                <field name="terminal_id" domain="[('tenant_id', '=', tenant_id)]" options="{'no_create': True}" readonly="state != 'draft'" class="border-bottom border-dark"/>
+                                <field name="terminal_id" invisible="1"/>
                                 <field name="date" readonly="state != 'draft'" class="border-bottom border-dark"/>
                                 <field name="is_return" invisible="1"/>
                                 <field name="return_id" invisible="not is_return" readonly="1" class="border-bottom border-dark"/>
                             </group>
                             <group>
-                                <field name="salesperson_id" options="{'no_create': True}" readonly="state != 'draft'" class="border-bottom border-dark"/>
+                                <field name="salesperson_id" invisible="1"/>
                                 <field name="payment_status" readonly="state != 'draft'" class="border-bottom border-dark" widget="radio" options="{'horizontal': true}"/>
                                 <field name="account_id" invisible="payment_status != 'cash'" required="payment_status == 'cash'" readonly="state != 'draft'" options="{'no_create': True, 'no_open': True}" class="border-bottom border-dark"/>
                                 <field name="tenant_id" invisible="1"/>
@@ -68,14 +68,15 @@
                             <page string="Order Lines">
                                 <field name="line_ids" readonly="state != 'draft'">
                                     <list editable="bottom">
-                                        <field name="product_id" domain="[('store_id', '=', parent.store_id)]" width="25%" optional="show"/>
-                                        <field name="item_code" width="10%" optional="show"/>
-                                        <field name="accepted_qty" width="15%" sum="Total Qty" optional="show"/>
-                                        <field name="rate" width="15%" optional="show"/>
-                                        <field name="cost_price" width="10%" optional="show" force_save="1"/>
+                                        <field name="item_code" width="15%"/>
+                                        <field name="product_id" domain="[('store_id', '=', parent.store_id)]" width="25%" string="Item Name"/>
+                                        <field name="accepted_qty" string="Qty" width="10%" sum="Total Qty"/>
+                                        <field name="rate" width="15%"/>
+                                        <field name="cost_price" width="10%" optional="hide" force_save="1"/>
+                                        <field name="gross_profit" string="Gross Profit" optional="hide" sum="Total Gross Profit"/>
                                         <field name="tax_ids" widget="many2many_tags" width="15%" optional="show"/>
                                         <field name="price_tax" string="Tax Amount" width="10%" sum="Total Tax" optional="show"/>
-                                        <field name="amount" width="10%" sum="Total Amount" optional="show"/>
+                                        <field name="amount" width="10%" sum="Total Amount"/>
                                     </list>
                                 </field>
                                 <group class="oe_subtotal_footer oe_right" colspan="2" name="sale_total">

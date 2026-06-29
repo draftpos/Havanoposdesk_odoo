@@ -45,7 +45,7 @@ class StockAdjustment(models.Model):
                 lines.append((0, 0, {
                     'product_id': product.id,
                     'on_hand': product.opening_stock,
-                    'counted': 0.0,
+                    'counted': product.opening_stock,
                 }))
             res['line_ids'] = lines
         return res
@@ -78,7 +78,7 @@ class StockAdjustment(models.Model):
                 lines.append((0, 0, {
                     'product_id': product.id,
                     'on_hand': product.opening_stock,
-                    'counted': 0.0,
+                    'counted': product.opening_stock,
                 }))
             self.line_ids = lines
             self.fetch_category_id = False
@@ -95,7 +95,7 @@ class StockAdjustment(models.Model):
                 lines.append((0, 0, {
                     'product_id': product.id,
                     'on_hand': product.opening_stock,
-                    'counted': 0.0,
+                    'counted': product.opening_stock,
                 }))
             self.line_ids = lines
             self.fetch_all_data = False
@@ -114,7 +114,7 @@ class StockAdjustment(models.Model):
                     lines.append((0, 0, {
                         'product_id': product.id,
                         'on_hand': product.opening_stock,
-                        'counted': 0.0,
+                        'counted': product.opening_stock,
                     }))
                 self.line_ids = lines
 
@@ -162,6 +162,8 @@ class StockAdjustment(models.Model):
                 continue
             is_creation = self.env.context.get('from_product_creation')
             for line in adjustment.line_ids:
+                if not is_creation and line.qty_difference == 0.0:
+                    continue
                 # Update Product On Hand (opening_stock)
                 if not is_creation:
                     line.product_id.opening_stock = line.counted
@@ -210,6 +212,8 @@ class StockAdjustment(models.Model):
             ], limit=1))
             
             for line in adjustment.line_ids:
+                if not is_creation and line.qty_difference == 0.0:
+                    continue
                 # Revert Product On Hand (opening_stock)
                 if is_creation:
                     line.product_id.opening_stock = 0.0

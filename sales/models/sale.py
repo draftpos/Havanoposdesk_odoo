@@ -377,6 +377,14 @@ class SaleLine(models.Model):
     price_tax = fields.Float(string='Tax', compute='_compute_amount', store=True)
     amount = fields.Float(string='Total', compute='_compute_amount', store=True)
     cost_price = fields.Float(string='Cost Price', compute='_compute_cost_price', store=True, readonly=False)
+    gross_profit = fields.Float(string='Gross Profit', compute='_compute_gross_profit', store=True)
+
+    @api.depends('price_subtotal', 'cost_price', 'accepted_qty', 'sale_id.is_return')
+    def _compute_gross_profit(self):
+        for line in self:
+            sign = -1.0 if line.sale_id.is_return else 1.0
+            total_cost = line.cost_price * line.accepted_qty * sign
+            line.gross_profit = line.price_subtotal - total_cost
 
     @api.depends('product_id', 'rate')
     def _compute_cost_price(self):
