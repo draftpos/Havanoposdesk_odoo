@@ -94,4 +94,112 @@
         </xpath>
     </template>
 
+    <!-- 4. Override web.login to bypass OWL user switch component and render the form instantly -->
+    <template id="havano_custom_login" inherit_id="web.login" name="Havano Custom Login">
+        <xpath expr="." position="replace">
+            <t t-call="web.login_layout">
+                <div class="oe_structure" id="oe_structure_login_top"/>
+                
+                <form class="oe_login_form" role="form" t-attf-action="/web/login" method="post" onsubmit="this.action = '/web/login' + location.hash">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+                    <!-- Database selector if multiple databases exist -->
+                    <div class="mb-3" t-if="databases and len(databases) &gt; 1">
+                        <label for="db" class="col-form-label">Database</label>
+                        <div class="input-group">
+                            <input type="text" name="db" t-att-value="request.db" id="db" class="form-control" required="required" readonly="readonly"/>
+                            <a role="button" href="/web/database/selector" class="btn border border-start-0">Select <i class="fa fa-database" role="img" aria-label="Database" title="Database"></i></a>
+                        </div>
+                    </div>
+
+                    <!-- Email / Login -->
+                    <div class="mb-3 field-login">
+                        <label for="login" class="form-label d-flex justify-content-between">Email</label>
+                        <input type="text" placeholder="Enter your email" name="login" t-att-value="login" id="login" class="form-control" required="required" autocapitalize="off" autocomplete="username" autofocus="autofocus"/>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <label for="password" class="form-label">Password</label>
+                        </div>
+                        <div class="input-group mb-1">
+                            <input type="password" placeholder="Enter your password" name="password" id="password" class="form-control" required="required" autocomplete="current-password" maxlength="4096"/>
+                            <button type="button" class="btn btn-sm border border-start-0 o_show_password" id="havano_show_password_btn">
+                                <i class="fa fa-eye" id="havano_password_eye_icon"/>
+                            </button>
+                        </div>
+                        <!-- Caps Lock Warning -->
+                        <div id="havano_caps_lock_warning" class="text-warning small mt-1" style="display: none;">
+                            <i class="fa fa-exclamation-triangle"/> Caps Lock is on
+                        </div>
+                    </div>
+
+                    <!-- Errors / Messages -->
+                    <p class="alert alert-danger" t-if="error" role="alert">
+                        <t t-esc="error"/>
+                    </p>
+                    <p class="alert alert-success" t-if="message" role="status">
+                        <t t-esc="message"/>
+                    </p>
+
+                    <!-- Login buttons -->
+                    <div class="oe_login_buttons text-center d-grid mb-1 pt-3">
+                        <button type="submit" class="btn btn-primary">Log in</button>
+                        <t t-if="debug">
+                            <button type="submit" name="redirect" value="/web/become" class="btn btn-link btn-sm">Log in as superuser</button>
+                        </t>
+                        <t t-call="web.login_oauth"/>
+                    </div>
+
+                    <input type="hidden" name="type" value="password"/>
+                    <input type="hidden" name="redirect" t-att-value="redirect"/>
+                </form>
+                
+                <div class="oe_structure" id="oe_structure_login_bottom"/>
+
+                <!-- Vanilla JS to make interactions fast and dynamic without Odoo JS dependencies -->
+                <script>
+                    (function() {
+                        // Toggle password visibility
+                        var toggleBtn = document.getElementById('havano_show_password_btn');
+                        var passwordInput = document.getElementById('password');
+                        var eyeIcon = document.getElementById('havano_password_eye_icon');
+                        if (toggleBtn &amp;&amp; passwordInput &amp;&amp; eyeIcon) {
+                            toggleBtn.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                if (passwordInput.type === 'password') {
+                                    passwordInput.type = 'text';
+                                    eyeIcon.classList.remove('fa-eye');
+                                    eyeIcon.classList.add('fa-eye-slash');
+                                } else {
+                                    passwordInput.type = 'password';
+                                    eyeIcon.classList.remove('fa-eye-slash');
+                                    eyeIcon.classList.add('fa-eye');
+                                }
+                            });
+                        }
+
+                        // Caps Lock warning indicator
+                        var capsWarning = document.getElementById('havano_caps_lock_warning');
+                        if (passwordInput &amp;&amp; capsWarning) {
+                            passwordInput.addEventListener('keydown', function(e) {
+                                if (e.getModifierState &amp;&amp; e.getModifierState('CapsLock')) {
+                                    capsWarning.style.display = 'block';
+                                } else {
+                                    capsWarning.style.display = 'none';
+                                }
+                            });
+                            passwordInput.addEventListener('keyup', function(e) {
+                                if (e.getModifierState &amp;&amp; !e.getModifierState('CapsLock')) {
+                                    capsWarning.style.display = 'none';
+                                }
+                            });
+                        }
+                    })();
+                </script>
+            </t>
+        </xpath>
+    </template>
+
 </odoo>
