@@ -65,7 +65,7 @@
         </record>
 
         <!-- Menu Item -->
-        <menuitem id="menu_category_sales_report" name="Category Sales" parent="menu_sales_reports" action="action_category_sales_report" sequence="20"/>
+        <menuitem id="menu_category_sales_report" name="by Category" parent="menu_sales_reports" action="action_category_sales_report" sequence="20"/>
     </data>
 </odoo>
 

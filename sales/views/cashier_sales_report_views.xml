@@ -65,6 +65,6 @@
         </record>
 
         <!-- Menu Item -->
-        <menuitem id="menu_cashier_sales_report" name="Cashier Sales" parent="menu_sales_reports" action="action_cashier_sales_report" sequence="30"/>
+        <menuitem id="menu_cashier_sales_report" name="by Cashier" parent="menu_sales_reports" action="action_cashier_sales_report" sequence="30"/>
     </data>
 </odoo>

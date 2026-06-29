@@ -69,6 +69,6 @@
         </record>
 
         <!-- Menu Item -->
-        <menuitem id="menu_terminal_sales_report" name="Terminal Sales" parent="menu_sales_reports" action="action_terminal_sales_report" sequence="40"/>
+        <menuitem id="menu_terminal_sales_report" name="by Shop" parent="menu_sales_reports" action="action_terminal_sales_report" sequence="40"/>
     </data>
 </odoo>
