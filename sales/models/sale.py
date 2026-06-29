@@ -28,11 +28,14 @@ class Sale(models.Model):
         for record in self:
             record.invoice_type = 'Credit Note' if record.is_return else 'Sales Invoice'
     
+    def _default_account_id(self):
+        return self.env['havanoposdesk.account'].search([('type', 'in', ['Cash', 'Bank'])], limit=1).id
+
     payment_status = fields.Selection([
         ('cash', 'Cash (Paid)'),
         ('account', 'On Account')
-    ], string='Payment Status', default='account', required=True)
-    account_id = fields.Many2one('havanoposdesk.account', string='Deposit Account', domain="[('type', 'in', ['Cash', 'Bank'])]")
+    ], string='Payment Status', default='cash', required=True)
+    account_id = fields.Many2one('havanoposdesk.account', string='Deposit Account', domain="[('type', 'in', ['Cash', 'Bank'])]", default=_default_account_id)
     pos_payment_id = fields.Many2one('havanoposdesk.payment', string='POS Payment Batch')
     
     line_ids = fields.One2many('havanoposdesk.sale.line', 'sale_id', string='Items')

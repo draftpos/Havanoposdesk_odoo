@@ -49,16 +49,13 @@
                         </div>
                         <group>
                             <group>
-                                <field name="invoice_type" invisible="1"/>
                                 <field name="customer" readonly="state != 'draft'" class="border-bottom border-dark"/>
                                 <field name="store_id" domain="[('tenant_id', '=', tenant_id)]" options="{'no_create': True}" readonly="state != 'draft'" class="border-bottom border-dark"/>
-                                <field name="terminal_id" invisible="1"/>
                                 <field name="date" readonly="state != 'draft'" class="border-bottom border-dark"/>
                                 <field name="is_return" invisible="1"/>
                                 <field name="return_id" invisible="not is_return" readonly="1" class="border-bottom border-dark"/>
                             </group>
                             <group>
-                                <field name="salesperson_id" invisible="1"/>
                                 <field name="payment_status" readonly="state != 'draft'" class="border-bottom border-dark" widget="radio" options="{'horizontal': true}"/>
                                 <field name="account_id" invisible="payment_status != 'cash'" required="payment_status == 'cash'" readonly="state != 'draft'" options="{'no_create': True, 'no_open': True}" class="border-bottom border-dark"/>
                                 <field name="tenant_id" invisible="1"/>
