@@ -1,11 +1,11 @@
 from odoo import models, fields, tools
 
-class CategorySalesReport(models.Model):
-    _name = 'havanoposdesk.category.sales.report'
-    _description = 'Category Sales Report'
+class CashierSalesReport(models.Model):
+    _name = 'havanoposdesk.cashier.sales.report'
+    _description = 'Cashier Sales Report'
     _auto = False
 
-    category_id = fields.Many2one('havanoposdesk.category', string='Category', readonly=True)
+    salesperson_id = fields.Many2one('res.users', string='Cashier', readonly=True)
     qty = fields.Float(string='Qty Sold', readonly=True)
     cost_price = fields.Float(string='Buying Price', readonly=True)
     selling_price = fields.Float(string='Selling Price', readonly=True)
@@ -22,7 +22,7 @@ class CategorySalesReport(models.Model):
             CREATE OR REPLACE VIEW %s AS (
                 SELECT
                     MIN(l.id) as id,
-                    p.category_id,
+                    s.salesperson_id,
                     SUM(CASE WHEN s.is_return THEN -l.accepted_qty ELSE l.accepted_qty END) as qty,
                     CASE 
                         WHEN SUM(CASE WHEN s.is_return THEN -l.accepted_qty ELSE l.accepted_qty END) > 0 
@@ -53,7 +53,6 @@ class CategorySalesReport(models.Model):
                 WHERE
                     s.state IN ('confirmed', 'done')
                 GROUP BY
-                    p.category_id, s.posting_date, l.tenant_id, s.store_id
+                    s.salesperson_id, s.posting_date, l.tenant_id, s.store_id
             )
         """ % (self._table,))
-

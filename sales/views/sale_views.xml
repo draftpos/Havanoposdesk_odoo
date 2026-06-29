@@ -13,6 +13,7 @@
                     <field name="customer"/>
                     <field name="date"/>
                     <field name="store_id"/>
+                    <field name="terminal_id" optional="show"/>
                     <field name="salesperson_id"/>
                     <field name="amount_untaxed" string="Total Exclu" sum="Total Exclu"/>
                     <field name="amount_tax" string="Total Tax" sum="Total Tax"/>
@@ -49,6 +50,7 @@
                                 <field name="invoice_type" readonly="1" class="border-bottom border-dark"/>
                                 <field name="customer" readonly="state != 'draft'" class="border-bottom border-dark"/>
                                 <field name="store_id" domain="[('tenant_id', '=', tenant_id)]" options="{'no_create': True}" readonly="state != 'draft'" class="border-bottom border-dark"/>
+                                <field name="terminal_id" domain="[('tenant_id', '=', tenant_id)]" options="{'no_create': True}" readonly="state != 'draft'" class="border-bottom border-dark"/>
                                 <field name="date" readonly="state != 'draft'" class="border-bottom border-dark"/>
                                 <field name="is_return" invisible="1"/>
                                 <field name="return_id" invisible="not is_return" readonly="1" class="border-bottom border-dark"/>

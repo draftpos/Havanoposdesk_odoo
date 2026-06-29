@@ -53,6 +53,11 @@ class Sale(models.Model):
         required=True, 
         default=_default_store_id
     )
+    terminal_id = fields.Many2one(
+        'havanoposdesk.pos.terminal', 
+        string='POS Terminal', 
+        default=lambda self: self.env.user.selected_terminal_id.id if self.env.user.selected_terminal_id else False
+    )
     date = fields.Datetime(string='Sale Date', default=fields.Datetime.now, required=True)
     amount_untaxed = fields.Float(string='Untaxed Amount', compute='_compute_amount_total', store=True)
     amount_tax = fields.Float(string='Taxes', compute='_compute_amount_total', store=True)

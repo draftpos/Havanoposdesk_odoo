@@ -899,6 +899,8 @@ class HavanoPOSDeskAPI(http.Controller):
                 ('tenant_id', '=', tenant.id),
                 ('name', '=', terminal_name)
             ], limit=1)
+        if not terminal and user:
+            terminal = user.selected_terminal_id
             
         store = False
         if terminal:
@@ -964,6 +966,7 @@ class HavanoPOSDeskAPI(http.Controller):
             'store': store.name,
             'store_id': store.id,
             'tenant_id': tenant.id,
+            'terminal_id': terminal.id if terminal else False,
             'line_ids': lines,
             'state': 'done',
         })
@@ -1601,11 +1604,13 @@ class HavanoPOSDeskAPI(http.Controller):
                     'rate': price or product.selling_price or 1.0,
                 }))
 
+            terminal = user.selected_terminal_id
             sale = env['havanoposdesk.sale'].create({
                 'customer': customer.id,
                 'store': store.name,
                 'store_id': store.id,
                 'tenant_id': tenant.id,
+                'terminal_id': terminal.id if terminal else False,
                 'line_ids': sale_lines,
                 'state': 'done',
             })
@@ -2027,11 +2032,13 @@ class HavanoPOSDeskAPI(http.Controller):
                         'rate': rate or product.selling_price or 1.0,
                     }))
 
+                terminal = user.selected_terminal_id
                 sale = env['havanoposdesk.sale'].create({
                     'customer': customer.id,
                     'store': store.name,
                     'store_id': store.id,
                     'tenant_id': tenant.id,
+                    'terminal_id': terminal.id if terminal else False,
                     'line_ids': lines,
                     'state': 'done',
                 })

@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- Item Profitability Report Tree View -->
-        <record id="view_item_profitability_report_tree" model="ir.ui.view">
-            <field name="name">havanoposdesk.item.profitability.report.list</field>
-            <field name="model">havanoposdesk.item.profitability.report</field>
+        <!-- Terminal Sales Report Tree View -->
+        <record id="view_terminal_sales_report_tree" model="ir.ui.view">
+            <field name="name">havanoposdesk.terminal.sales.report.list</field>
+            <field name="model">havanoposdesk.terminal.sales.report</field>
             <field name="arch" type="xml">
-                <list string="Item Profitability" create="false" edit="false" delete="false">
+                <list string="Terminal Sales" create="false" edit="false" delete="false">
                     <field name="date" optional="show"/>
-                    <field name="item_code" optional="show"/>
-                    <field name="name" optional="show"/>
-                    <field name="category_id" optional="show"/>
+                    <field name="terminal_id" optional="show"/>
+                    <field name="salesperson_id" optional="show"/>
                     <field name="store_id" optional="show"/>
                     <field name="qty" sum="Total Qty" optional="show"/>
                     <field name="cost_price" widget="monetary" optional="show"/>
@@ -22,14 +21,13 @@
             </field>
         </record>
 
-        <!-- Item Profitability Report Pivot View -->
-        <record id="view_item_profitability_report_pivot" model="ir.ui.view">
-            <field name="name">havanoposdesk.item.profitability.report.pivot</field>
-            <field name="model">havanoposdesk.item.profitability.report</field>
+        <!-- Terminal Sales Report Pivot View -->
+        <record id="view_terminal_sales_report_pivot" model="ir.ui.view">
+            <field name="name">havanoposdesk.terminal.sales.report.pivot</field>
+            <field name="model">havanoposdesk.terminal.sales.report</field>
             <field name="arch" type="xml">
-                <pivot string="Item Profitability" disable_linking="True">
-                    <field name="category_id" type="row"/>
-                    <field name="product_id" type="row"/>
+                <pivot string="Terminal Sales" disable_linking="True">
+                    <field name="terminal_id" type="row"/>
                     <field name="qty" type="measure"/>
                     <field name="total_sales" type="measure"/>
                     <field name="profit" type="measure"/>
@@ -37,24 +35,23 @@
             </field>
         </record>
 
-        <!-- Item Profitability Report Search View -->
-        <record id="view_item_profitability_report_search" model="ir.ui.view">
-            <field name="name">havanoposdesk.item.profitability.report.search</field>
-            <field name="model">havanoposdesk.item.profitability.report</field>
+        <!-- Terminal Sales Report Search View -->
+        <record id="view_terminal_sales_report_search" model="ir.ui.view">
+            <field name="name">havanoposdesk.terminal.sales.report.search</field>
+            <field name="model">havanoposdesk.terminal.sales.report</field>
             <field name="arch" type="xml">
-                <search string="Search Profitability">
-                    <field name="name" string="Product"/>
-                    <field name="item_code"/>
-                    <field name="category_id"/>
+                <search string="Search Terminal Sales">
+                    <field name="terminal_id"/>
+                    <field name="salesperson_id"/>
                     <field name="store_id"/>
                     <separator/>
                     <filter string="Today" name="today" domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                    <filter string="My Sales" name="my_sales" domain="[('salesperson_id', '=', uid)]"/>
                     <filter string="This Month" name="this_month" domain="[
                         ('date', '&gt;=', context_today().strftime('%Y-%m-01')),
                         ('date', '&lt;', (context_today() + relativedelta(months=1)).strftime('%Y-%m-01'))
                     ]"/>
                     <group expand="1" string="Group By">
-                        <filter string="Category" name="group_by_category" context="{'group_by':'category_id'}"/>
                         <filter string="Store" name="group_by_store" context="{'group_by':'store_id'}"/>
                         <filter string="Date" name="group_by_date" context="{'group_by':'date'}"/>
                     </group>
@@ -62,16 +59,16 @@
             </field>
         </record>
 
-        <!-- Action for Item Profitability Report -->
-        <record id="action_item_profitability_report" model="ir.actions.act_window">
-            <field name="name">Item Profitability</field>
-            <field name="res_model">havanoposdesk.item.profitability.report</field>
+        <!-- Action for Terminal Sales Report -->
+        <record id="action_terminal_sales_report" model="ir.actions.act_window">
+            <field name="name">Terminal Sales</field>
+            <field name="res_model">havanoposdesk.terminal.sales.report</field>
             <field name="view_mode">list,pivot</field>
-            <field name="search_view_id" ref="view_item_profitability_report_search"/>
+            <field name="search_view_id" ref="view_terminal_sales_report_search"/>
+            <field name="context">{'search_default_today': 1, 'search_default_my_sales': 1}</field>
         </record>
 
         <!-- Menu Item -->
-        <menuitem id="menu_item_profitability_report" name="Item Profitability" parent="menu_sales_reports" action="action_item_profitability_report" sequence="10"/>
+        <menuitem id="menu_terminal_sales_report" name="Terminal Sales" parent="menu_sales_reports" action="action_terminal_sales_report" sequence="40"/>
     </data>
 </odoo>
-
