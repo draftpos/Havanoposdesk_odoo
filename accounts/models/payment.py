@@ -61,7 +61,7 @@ class Payment(models.Model):
     def write(self, vals):
         from odoo.exceptions import ValidationError
         for record in self:
-            if record.state != 'draft' and any(f not in ['state'] for f in vals.keys()):
+            if record.state != 'draft' and not self.env.context.get('bypass_payment_check') and any(f not in ['state'] for f in vals.keys()):
                 raise ValidationError("You cannot modify a confirmed/posted payment. Please cancel it first.")
         return super().write(vals)
 

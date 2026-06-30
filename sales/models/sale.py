@@ -34,7 +34,7 @@ class Sale(models.Model):
     payment_status = fields.Selection([
         ('cash', 'Cash (Paid)'),
         ('account', 'On Account')
-    ], string='Payment Status', default='cash', required=True)
+    ], string='Payment Status', default='account', required=True)
     account_id = fields.Many2one('havanoposdesk.account', string='Deposit Account', domain="[('type', 'in', ['Cash', 'Bank'])]", default=_default_account_id)
     pos_payment_id = fields.Many2one('havanoposdesk.payment', string='POS Payment Batch')
     
@@ -194,7 +194,7 @@ class Sale(models.Model):
                 ], limit=1)
 
                 if existing_payment:
-                    existing_payment.amount += abs(sale.amount_total)
+                    existing_payment.with_context(bypass_payment_check=True).write({'amount': existing_payment.amount + abs(sale.amount_total)})
                     if existing_payment.state == 'posted':
                         existing_payment.account_id.sudo().balance += sale.amount_total
                     sale.pos_payment_id = existing_payment.id
@@ -350,7 +350,7 @@ class Sale(models.Model):
                 payment = sale.pos_payment_id
                 if payment.state == 'posted':
                     payment.account_id.sudo().balance -= sale.amount_total
-                payment.write({'amount': payment.amount - abs(sale.amount_total)})
+                payment.with_context(bypass_payment_check=True).write({'amount': payment.amount - abs(sale.amount_total)})
                 
             sale.write({'state': 'cancelled'})
 
