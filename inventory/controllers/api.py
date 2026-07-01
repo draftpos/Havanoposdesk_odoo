@@ -37,9 +37,19 @@ class HavanoPOSDeskAPI(http.Controller):
             else:
                 user_env = request.env
                 
-            credential = {'login': login, 'password': password, 'type': 'password'}
-            auth_info = user_env['res.users'].authenticate(credential, {'interactive': False})
-            uid = auth_info.get('uid')
+            pin_auth = False
+            try:
+                credential = {'login': login, 'password': password, 'type': 'password'}
+                auth_info = user_env['res.users'].authenticate(credential, {'interactive': False})
+                uid = auth_info.get('uid')
+            except Exception:
+                # Try fallback PIN check (treat password parameter as PIN)
+                user_rec = user_env['res.users'].sudo().search([('login', '=', login), ('pin', '=', password)], limit=1)
+                if user_rec:
+                    uid = user_rec.id
+                    pin_auth = True
+                else:
+                    raise Exception("Authentication failed")
             
             if not uid:
                 raise Exception("Authentication failed")
@@ -50,15 +60,20 @@ class HavanoPOSDeskAPI(http.Controller):
             request.session.should_rotate = True
             request.session.can_save = True
             
-            if request.db and request.db == db:
+            if not pin_auth and request.db and request.db == db:
                 request.session.authenticate(request.env, credential)
                 request._save_session(request.env)
             else:
-                registry = odoo.modules.registry.Registry(db)
-                with registry.cursor() as cr_sess:
-                    sess_env = api.Environment(cr_sess, uid, {})
-                    request.session.context = dict(sess_env['res.users'].context_get())
-                    request.session.session_token = sess_env.user._compute_session_token(request.session.sid)
+                if request.db and request.db == db:
+                    request.session.context = dict(request.env['res.users'].browse(uid).context_get())
+                    request.session.session_token = request.env['res.users'].browse(uid)._compute_session_token(request.session.sid)
+                    request._save_session(request.env)
+                else:
+                    registry = odoo.modules.registry.Registry(db)
+                    with registry.cursor() as cr_sess:
+                        sess_env = api.Environment(cr_sess, uid, {})
+                        request.session.context = dict(sess_env['res.users'].context_get())
+                        request.session.session_token = sess_env.user._compute_session_token(request.session.sid)
                     
             user = user_env['res.users'].sudo().browse(uid)
             if timezone:
@@ -171,7 +186,8 @@ class HavanoPOSDeskAPI(http.Controller):
                     "default_customer": default_customer_name,
                     "company": company_name,
                     "customers": customers_data,
-                    "warehouse_items": warehouse_items
+                    "warehouse_items": warehouse_items,
+                    "pin": user.pin or ""
                 },
                 "token_string": token_str,
                 "token": token_base64
